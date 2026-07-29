@@ -207,6 +207,8 @@ body.membro .hide-membro{display:none !important}
     <button data-v="pessoas">👤 Pessoas</button>
     <button data-v="ideias">💡 Ideias</button>
     <button data-v="reunioes">📅 Reuniões</button>
+    <button data-v="eventos">🎤 Eventos</button>
+    <button data-v="calendario">🗓️ Calendário</button>
     <button data-v="mural">📣 Mural</button>
     <button data-v="aprovacoes">✔️ Aprovações</button>
     <button data-v="onboarding" class="hide-membro">🎯 Onboarding</button>
@@ -220,6 +222,8 @@ body.membro .hide-membro{display:none !important}
     <div class="view" id="v-pessoas"></div>
     <div class="view" id="v-ideias"></div>
     <div class="view" id="v-reunioes"></div>
+    <div class="view" id="v-eventos"></div>
+    <div class="view" id="v-calendario"></div>
     <div class="view" id="v-mural"></div>
     <div class="view" id="v-aprovacoes"></div>
     <div class="view hide-membro" id="v-onboarding"></div>
@@ -250,7 +254,7 @@ const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
 let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0;
-let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[];
+let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[];
 let VIEW="dashboard",PROJ_VIEW="kanban",EU="";
 try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
 
@@ -271,6 +275,8 @@ const apToRow=a=>({id:a.id,tipo:a.tipo||"Projeto",titulo:a.titulo,descricao:a.de
 const rowToAp=r=>({id:r.id,tipo:r.tipo||"Projeto",titulo:r.titulo,descricao:r.descricao||"",solicitante:r.solicitante||"",status:r.status||"Pendente",historico:r.historico||[],createdAt:r.created_at});
 const muToRow=x=>({id:x.id,autor:x.autor||"",titulo:x.titulo||"",texto:x.texto||"",fixado:!!x.fixado,comentarios:x.comentarios||[]});
 const rowToMu=r=>({id:r.id,autor:r.autor||"",titulo:r.titulo||"",texto:r.texto||"",fixado:!!r.fixado,comentarios:r.comentarios||[],createdAt:r.created_at});
+const evToRow=e=>({id:e.id,nome:e.nome,tipo:e.tipo||"Palestra",objetivo:e.objetivo||"",data:e.data||null,hora:e.hora||"",local:e.local||"",link:e.link||"",equipe:e.equipe||[],cronograma:e.cronograma||[],inscritos:e.inscritos||[],resultado:e.resultado||"",status:e.status||"Planejado"});
+const rowToEv=r=>({id:r.id,nome:r.nome,tipo:r.tipo||"Palestra",objetivo:r.objetivo||"",data:r.data||"",hora:r.hora||"",local:r.local||"",link:r.link||"",equipe:r.equipe||[],cronograma:r.cronograma||[],inscritos:r.inscritos||[],resultado:r.resultado||"",status:r.status||"Planejado"});
 
 /* ---------- supabase ---------- */
 async function ensureSB(){if(sb)return sb;if(!window.supabase){await new Promise((res,rej)=>{const s=document.createElement("script");s.src=CDN;s.onload=res;s.onerror=()=>rej(new Error("Falha ao carregar Supabase"));document.head.appendChild(s);});}sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);return sb;}
@@ -280,7 +286,7 @@ const Store={
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
     await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
-    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
+    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
     sb.channel("rt-liga-notif").on("postgres_changes",{event:"*",schema:"public",table:"liga_notificacoes"},()=>{if(Date.now()-lastWrite>1500)this.reload().then(()=>renderBell()).catch(()=>{});}).subscribe();
   },
   async reload(){
@@ -294,8 +300,8 @@ const Store={
     ]);
     DIRETORIAS=(d.data||[]);PESSOAS=(p.data||[]).map(rowToP);PROJETOS=(pr.data||[]).map(rowToPr);TAREFAS=(t.data||[]).map(rowToT);
     IDEIAS=(id.data||[]).map(rowToI);REUNIOES=(re.data||[]).map(rowToR);
-    const [ca,ap,mu]=await Promise.all([sb.from("liga_candidatos").select("*").order("created_at",{ascending:false}),sb.from("liga_aprovacoes").select("*").order("created_at",{ascending:false}),sb.from("liga_mural").select("*").order("created_at",{ascending:false})]);
-    CANDIDATOS=(ca.data||[]).map(rowToCand);APROVACOES=(ap.data||[]).map(rowToAp);MURAL=(mu.data||[]).map(rowToMu);
+    const [ca,ap,mu,ev]=await Promise.all([sb.from("liga_candidatos").select("*").order("created_at",{ascending:false}),sb.from("liga_aprovacoes").select("*").order("created_at",{ascending:false}),sb.from("liga_mural").select("*").order("created_at",{ascending:false}),sb.from("liga_eventos").select("*").order("data",{ascending:false})]);
+    CANDIDATOS=(ca.data||[]).map(rowToCand);APROVACOES=(ap.data||[]).map(rowToAp);MURAL=(mu.data||[]).map(rowToMu);EVENTOS=(ev.data||[]).map(rowToEv);
     const n=await sb.from("liga_notificacoes").select("*").order("criado_em",{ascending:false}).limit(200);
     NOTIF=(n.data||[]);
   },
@@ -309,6 +315,8 @@ const Store={
   async delAprov(id){lastWrite=Date.now();APROVACOES=APROVACOES.filter(y=>y.id!==id);const {error}=await sb.from("liga_aprovacoes").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveMural(x){lastWrite=Date.now();const i=MURAL.findIndex(y=>y.id===x.id);if(i>=0)MURAL[i]=x;else MURAL.unshift(x);const {error}=await sb.from("liga_mural").upsert(muToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
   async delMural(id){lastWrite=Date.now();MURAL=MURAL.filter(y=>y.id!==id);const {error}=await sb.from("liga_mural").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
+  async saveEvento(x){lastWrite=Date.now();const i=EVENTOS.findIndex(y=>y.id===x.id);if(i>=0)EVENTOS[i]=x;else EVENTOS.unshift(x);const {error}=await sb.from("liga_eventos").upsert(evToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delEvento(id){lastWrite=Date.now();EVENTOS=EVENTOS.filter(y=>y.id!==id);const {error}=await sb.from("liga_eventos").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async savePessoa(p){lastWrite=Date.now();const i=PESSOAS.findIndex(x=>x.id===p.id);if(i>=0)PESSOAS[i]=p;else PESSOAS.push(p);const {error}=await sb.from("liga_pessoas").upsert(pToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
   async delPessoa(id){lastWrite=Date.now();PESSOAS=PESSOAS.filter(x=>x.id!==id);const {error}=await sb.from("liga_pessoas").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveProjeto(p){lastWrite=Date.now();const i=PROJETOS.findIndex(x=>x.id===p.id);if(i>=0)PROJETOS[i]=p;else PROJETOS.unshift(p);const {error}=await sb.from("liga_projetos").upsert(prToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
@@ -341,7 +349,7 @@ function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.
 $("#btnNovoProj").onclick=()=>projModal(null);
 $("#bellBtn").onclick=()=>notifModal();
 
-function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();renderGateTeam();}
+function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();renderGateTeam();}
 
 /* ---------- DASHBOARD ---------- */
 function renderDash(){
@@ -726,6 +734,82 @@ window.muralModal=id=>{const editing=!!id;const x=editing?Object.assign({},MURAL
   $("#modalMount").appendChild(m);m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
   $("#mu-save").onclick=async()=>{x.titulo=$("#mu-tit").value.trim()||"(sem título)";x.texto=$("#mu-txt").value.trim();x.fixado=$("#mu-fix").checked;const b=$("#mu-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveMural(x);m.remove();render();toast(editing?"Salvo":"Aviso publicado");}catch(e){b.disabled=false;b.textContent="Salvar";toast("Erro",true);}};
 };
+
+/* ---------- EVENTOS ---------- */
+const ETIPOS=["Palestra","Workshop","Curso","Competição","Mesa-redonda","Visita técnica"];
+const EVSTATUS=["Planejado","Confirmado","Em andamento","Realizado","Cancelado"];
+function renderEventos(){const el=$("#v-eventos");el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input id="qE" placeholder="Buscar evento..."></div><button class="btn sm hide-membro" onclick="eventoModal(null)">+ Novo evento</button></div><div id="eBody"></div>`;const q=$("#qE");q.oninput=()=>drawEventos(q.value);drawEventos("");}
+function drawEventos(term){const t=(term||"").toLowerCase();const rows=EVENTOS.filter(e=>!t||(e.nome+" "+(e.tipo||"")+" "+(e.local||"")).toLowerCase().includes(t));$("#eBody").innerHTML=`<div class="grid-cards">${rows.map(eventoCard).join("")||`<div class="empty" style="grid-column:1/-1">Nenhum evento cadastrado.</div>`}</div>`;$("#eBody").querySelectorAll("[data-eed]").forEach(b=>b.onclick=()=>eventoModal(b.dataset.eed));}
+function eventoCard(e){const ins=(e.inscritos||[]).length,pres=(e.inscritos||[]).filter(i=>i.presente).length;return `<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(e.nome)}</h4><span class="chip" style="background:var(--brand-tint);color:var(--brand)">${esc(e.tipo)}</span></div><div style="font-size:13px;color:var(--ink-soft)">${e.data?brDate(e.data):"sem data"}${e.hora?" · "+esc(e.hora):""}${e.local?" · "+esc(e.local):""}</div>${e.objetivo?`<div style="font-size:13px;color:var(--ink-soft)">${esc(e.objetivo).slice(0,110)}</div>`:""}<div style="font-size:12px;color:var(--ink-soft)">${ins} inscrito(s)${pres?" · "+pres+" presente(s)":""} · ${esc(e.status)}</div><div class="p2-actions">${e.link?`<a class="cbtn ml" href="${esc(e.link)}" target="_blank" rel="noopener">Link</a>`:""}<button class="btn ghost sm" data-eed="${e.id}">Abrir</button></div></div>`;}
+window.eventoModal=id=>{const editing=!!id;const dir=ROLE==="direcao";const e=editing?JSON.parse(JSON.stringify(EVENTOS.find(x=>x.id===id))):{id:uid(),nome:"",tipo:"Palestra",objetivo:"",data:todayISO(),hora:"",local:"",link:"",equipe:[],cronograma:[],inscritos:[],resultado:"",status:"Planejado"};const ro=dir?"":"disabled";const m=document.createElement("div");m.className="modal-bg";
+  m.innerHTML=`<div class="modal" style="max-width:660px"><div class="modal-head"><h2>${editing?esc(e.nome||"Evento"):"Novo evento"}</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field-row"><div class="field"><label>Nome</label><input id="e-nome" value="${esc(e.nome)}" ${ro}></div><div class="field"><label>Tipo</label><select id="e-tipo" ${ro}>${ETIPOS.map(t=>`<option ${e.tipo===t?"selected":""}>${t}</option>`).join("")}</select></div></div>
+    <div class="field"><label>Objetivo</label><input id="e-obj" value="${esc(e.objetivo)}" ${ro}></div>
+    <div class="field-row three"><div class="field"><label>Data</label><input type="date" id="e-data" value="${e.data||""}" ${ro}></div><div class="field"><label>Hora</label><input id="e-hora" value="${esc(e.hora)}" ${ro}></div><div class="field"><label>Status</label><select id="e-status" ${ro}>${EVSTATUS.map(s=>`<option ${e.status===s?"selected":""}>${s}</option>`).join("")}</select></div></div>
+    <div class="field-row"><div class="field"><label>Local</label><input id="e-local" value="${esc(e.local)}" ${ro}></div><div class="field"><label>Link (se online)</label><input id="e-link" value="${esc(e.link)}" ${ro}></div></div>
+    <div class="field"><label>Equipe organizadora</label><div id="e-eq"></div>${dir?`<select id="e-addeq" class="add-mini" style="border-style:solid"><option value="">+ adicionar</option>${PESSOAS.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}</option>`).join("")}</select>`:""}</div>
+    <div class="field"><label>Checklist de organização</label><div id="e-cron"></div>${dir?`<button class="add-mini" id="e-addcron" type="button">+ item</button>`:""}</div>
+    <div class="field"><label>Inscritos / presença</label><div id="e-ins"></div>${dir?`<div style="display:flex;gap:8px;margin-top:6px"><input id="e-insnome" placeholder="Nome do inscrito"><input id="e-insmail" placeholder="E-mail (para certificado)"><button class="btn sm" id="e-addins" type="button">Inscrever</button></div>`:""}</div>
+    <div class="field"><label>Resultado do evento</label><textarea id="e-res" rows="2" ${ro}>${esc(e.resultado)}</textarea></div>
+  </div><div class="modal-foot">${dir&&editing?`<button class="btn danger sm" id="e-del">Excluir</button>`:""}<button class="btn ghost" data-x>Fechar</button>${dir?`<button class="btn" id="e-save">${editing?"Salvar":"Criar"}</button>`:""}</div></div>`;
+  $("#modalMount").appendChild(m);
+  const drawEq=()=>{$("#e-eq").innerHTML=e.equipe.length?`<div class="p2-tags">${e.equipe.map((n,i)=>`<span class="tag dir">${esc(n)}${dir?` <button class="link" style="color:#fff" data-eqx="${i}">×</button>`:""}</span>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem equipe</span>`;$("#e-eq").querySelectorAll("[data-eqx]").forEach(b=>b.onclick=()=>{e.equipe.splice(+b.dataset.eqx,1);drawEq();});};
+  const drawCron=()=>{$("#e-cron").innerHTML=e.cronograma.map((k,i)=>`<div class="chkrow"><input type="checkbox" ${k.ok?"checked":""} data-ec="${i}" ${dir?"":"disabled"}><span style="flex:1;${k.ok?'text-decoration:line-through;color:var(--ink-soft)':''}">${esc(k.txt)}</span>${dir?`<button class="link" style="color:var(--crit)" data-ecx="${i}">rem</button>`:""}</div>`).join("")||`<span style="color:var(--ink-soft);font-size:13px">Sem itens</span>`;$("#e-cron").querySelectorAll("[data-ec]").forEach(cb=>cb.onchange=()=>{e.cronograma[+cb.dataset.ec].ok=cb.checked;});$("#e-cron").querySelectorAll("[data-ecx]").forEach(b=>b.onclick=()=>{e.cronograma.splice(+b.dataset.ecx,1);drawCron();});};
+  const drawIns=()=>{$("#e-ins").innerHTML=e.inscritos.length?`<div style="display:flex;flex-direction:column;gap:6px">${e.inscritos.map((i,ix)=>`<div class="chkrow"><input type="checkbox" ${i.presente?"checked":""} data-ip="${ix}" ${dir?"":"disabled"}><span style="flex:1">${esc(i.nome)}${i.email?` <span style="color:var(--ink-soft);font-size:11px">${esc(i.email)}</span>`:""}</span>${i.presente?`<button class="link" data-icert="${ix}">📄 certificado</button>`:""}${dir?`<button class="link" style="color:var(--crit)" data-ix="${ix}">rem</button>`:""}</div>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem inscritos</span>`;
+    $("#e-ins").querySelectorAll("[data-ip]").forEach(cb=>cb.onchange=()=>{e.inscritos[+cb.dataset.ip].presente=cb.checked;drawIns();});
+    $("#e-ins").querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>{e.inscritos.splice(+b.dataset.ix,1);drawIns();});
+    $("#e-ins").querySelectorAll("[data-icert]").forEach(b=>b.onclick=()=>gerarCertificado(e,e.inscritos[+b.dataset.icert]));};
+  drawEq();drawCron();drawIns();
+  if(dir){const ae=$("#e-addeq");if(ae)ae.onchange=()=>{if(ae.value&&!e.equipe.includes(ae.value)){e.equipe.push(ae.value);drawEq();}ae.value="";};
+    const ac=$("#e-addcron");if(ac)ac.onclick=()=>{const t=prompt("Item da organização:");if(t){e.cronograma.push({txt:t,ok:false});drawCron();}};
+    const ai=$("#e-addins");if(ai)ai.onclick=()=>{const n=$("#e-insnome").value.trim();if(!n)return;e.inscritos.push({nome:n,email:$("#e-insmail").value.trim(),presente:false});$("#e-insnome").value="";$("#e-insmail").value="";drawIns();};}
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=ev=>{if(ev.target===m)m.remove();};
+  const del=$("#e-del");if(del)del.onclick=async()=>{if(confirm("Excluir evento?")){try{await Store.delEvento(e.id);m.remove();render();toast("Excluído");}catch(x){toast("Erro",true);}}};
+  const save=$("#e-save");if(save)save.onclick=async()=>{e.nome=$("#e-nome").value.trim()||"(sem nome)";e.tipo=$("#e-tipo").value;e.objetivo=$("#e-obj").value.trim();e.data=$("#e-data").value;e.hora=$("#e-hora").value.trim();e.status=$("#e-status").value;e.local=$("#e-local").value.trim();e.link=$("#e-link").value.trim();e.resultado=$("#e-res").value.trim();save.disabled=true;save.innerHTML='<span class="spin"></span>';try{await Store.saveEvento(e);m.remove();render();toast(editing?"Salvo":"Evento criado");}catch(x){save.disabled=false;save.textContent="Salvar";toast("Erro",true);}};
+};
+async function gerarCertificado(ev,inscrito){
+  if(!window.jspdf){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";s.onload=res;s.onerror=()=>rej(new Error("no lib"));document.head.appendChild(s);});}
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  const W=297,H=210;
+  doc.setFillColor(245,247,251);doc.rect(0,0,W,H,"F");
+  doc.setDrawColor(37,99,235);doc.setLineWidth(1.5);doc.rect(12,12,W-24,H-24);
+  doc.setDrawColor(14,159,142);doc.setLineWidth(0.5);doc.rect(16,16,W-32,H-32);
+  doc.setTextColor(15,42,74);doc.setFont("helvetica","bold");doc.setFontSize(30);doc.text("CERTIFICADO",W/2,50,{align:"center"});
+  doc.setTextColor(90,102,117);doc.setFont("helvetica","normal");doc.setFontSize(13);doc.text("A LigaHub Finance certifica que",W/2,72,{align:"center"});
+  doc.setTextColor(37,99,235);doc.setFont("helvetica","bold");doc.setFontSize(26);doc.text(inscrito.nome||"—",W/2,90,{align:"center"});
+  doc.setTextColor(60,70,85);doc.setFont("helvetica","normal");doc.setFontSize(13);
+  const linha=`participou do evento "${ev.nome}" (${ev.tipo})${ev.data?", em "+brDate(ev.data):""}.`;
+  doc.text(doc.splitTextToSize(linha,W-90),W/2,106,{align:"center"});
+  doc.setDrawColor(15,42,74);doc.setLineWidth(0.4);doc.line(W/2-45,168,W/2+45,168);
+  doc.setFontSize(11);doc.setTextColor(90,102,117);doc.text("LigaHub Finance · Direção",W/2,175,{align:"center"});
+  doc.save("certificado-"+(inscrito.nome||"membro").replace(/\s+/g,"-").toLowerCase()+".pdf");
+  toast("Certificado gerado");
+}
+
+/* ---------- CALENDÁRIO ---------- */
+let CAL_REF=null;
+function calItens(){
+  const it=[];
+  REUNIOES.forEach(r=>{if(r.data)it.push({data:r.data,tipo:"Reunião",cor:"#2563EB",nome:r.titulo});});
+  EVENTOS.forEach(e=>{if(e.data)it.push({data:e.data,tipo:"Evento",cor:"#0E9F8E",nome:e.nome});});
+  PROJETOS.forEach(p=>{if(p.prazo&&projAtivo(p))it.push({data:p.prazo,tipo:"Prazo projeto",cor:"#C67C00",nome:p.nome});});
+  TAREFAS.forEach(t=>{if(t.prazo&&t.status!=="concluida")it.push({data:t.prazo,tipo:"Prazo tarefa",cor:"#D62F2F",nome:t.titulo});});
+  return it;
+}
+function renderCalendario(){
+  const el=$("#v-calendario");
+  if(!CAL_REF){const d=new Date();CAL_REF={y:d.getFullYear(),m:d.getMonth()};}
+  const {y,m}=CAL_REF;const first=new Date(y,m,1),start=first.getDay(),dim=new Date(y,m+1,0).getDate();
+  const meses=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const itens=calItens();const byDay={};itens.forEach(i=>{if(i.data&&i.data.slice(0,7)===`${y}-${String(m+1).padStart(2,"0")}`){const dd=+i.data.slice(8,10);(byDay[dd]=byDay[dd]||[]).push(i);}});
+  const hojeISO=todayISO();
+  let cells="";for(let i=0;i<start;i++)cells+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;const ev=(byDay[d]||[]);cells+=`<div class="cal-cell${iso===hojeISO?" hoje":""}"><span class="cal-num">${d}</span>${ev.slice(0,4).map(i=>`<div class="cal-ev" style="background:${i.cor}1a;color:${i.cor}" title="${esc(i.tipo)}: ${esc(i.nome)}">${esc(i.nome)}</div>`).join("")}${ev.length>4?`<div style="font-size:10px;color:var(--ink-soft)">+${ev.length-4}</div>`:""}</div>`;}
+  el.innerHTML=`<div class="toolbar"><button class="btn ghost sm" id="cal-prev">‹</button><h3 style="min-width:180px;text-align:center">${meses[m]} ${y}</h3><button class="btn ghost sm" id="cal-next">›</button><div style="flex:1"></div><div style="font-size:12px;color:var(--ink-soft);display:flex;gap:12px;flex-wrap:wrap"><span><i style="display:inline-block;width:10px;height:10px;background:#2563EB;border-radius:3px"></i> Reunião</span><span><i style="display:inline-block;width:10px;height:10px;background:#0E9F8E;border-radius:3px"></i> Evento</span><span><i style="display:inline-block;width:10px;height:10px;background:#C67C00;border-radius:3px"></i> Projeto</span><span><i style="display:inline-block;width:10px;height:10px;background:#D62F2F;border-radius:3px"></i> Tarefa</span></div></div>
+    <div class="cal-grid"><div class="cal-h">Dom</div><div class="cal-h">Seg</div><div class="cal-h">Ter</div><div class="cal-h">Qua</div><div class="cal-h">Qui</div><div class="cal-h">Sex</div><div class="cal-h">Sáb</div>${cells}</div>`;
+  $("#cal-prev").onclick=()=>{CAL_REF.m--;if(CAL_REF.m<0){CAL_REF.m=11;CAL_REF.y--;}renderCalendario();};
+  $("#cal-next").onclick=()=>{CAL_REF.m++;if(CAL_REF.m>11){CAL_REF.m=0;CAL_REF.y++;}renderCalendario();};
+}
 
 /* ---------- NOTIFICAÇÕES ---------- */
 function renderBell(){const el=$("#bellCount");if(!el)return;const n=EU?NOTIF.filter(x=>x.membro===EU&&!x.lida).length:0;el.textContent=n>99?"99+":String(n);el.classList.toggle("hidden",n===0);}
