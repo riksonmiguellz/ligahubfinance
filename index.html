@@ -532,22 +532,32 @@ window.pessoaModal=id=>{
       <div class="field-row"><div class="field"><label>Diretoria</label><select id="m-dir">${dirOpts}</select></div><div class="field"><label>Cargo</label><input id="m-cargo" value="${esc(p.cargo)}" placeholder="Ex.: Diretor, Coordenador"></div></div>
       <div class="field"><label>Competências</label><input id="m-comp" value="${esc(p.competencias)}" placeholder="Ex.: Excel, Design, Copy"></div>
       <div class="field"><label>LinkedIn (opcional)</label><input id="m-lk" value="${esc(p.linkedin)}" placeholder="https://linkedin.com/in/..."></div>
-      ${!dir?`<div style="font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px">Seus dados passam pela aprovação da Direção antes de ficarem oficiais.</div>`:""}
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">Obrigatórios: foto, nome, apelido, e-mail, telefone e cargo. A diretoria é obrigatória, exceto para Conselheiro (atende todas as áreas).</div>
+      ${!dir?`<div style="font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px">Seus dados passam pela aprovação da Direção antes de ficarem oficiais.</div>`:""}
+      <div class="err" id="m-err" style="margin-top:8px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn" id="m-save">${editing?"Salvar":"Enviar"}</button></div></div>`;
   $("#modalMount").appendChild(m);
   m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
   $("#avFile").onchange=()=>{const f=$("#avFile").files[0];if(!f)return;novaFoto=f;const r=new FileReader();r.onload=()=>$("#avPrev").innerHTML=`<img src="${r.result}" alt="">`;r.readAsDataURL(f);};
   $("#m-save").onclick=async()=>{
+    const v={nome:$("#m-nome").value.trim(),apelido:$("#m-ape").value.trim(),email:$("#m-email").value.trim(),telefone:$("#m-tel").value.trim(),cargo:$("#m-cargo").value.trim(),diretoria:$("#m-dir").value};
+    const isConselho=/conselh/i.test(v.cargo);
+    const faltas=[];
+    if(!(p.foto||novaFoto))faltas.push("foto");
+    if(!v.nome)faltas.push("nome");if(!v.apelido)faltas.push("apelido");if(!v.email)faltas.push("e-mail");if(!v.telefone)faltas.push("telefone");if(!v.cargo)faltas.push("cargo");
+    if(!isConselho && !v.diretoria)faltas.push("diretoria");
+    if(faltas.length){$("#m-err").textContent="Para finalizar o cadastro, preencha: "+faltas.join(", ")+".";return;}
+    $("#m-err").textContent="";
     const b=$("#m-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';
     try{
       if(novaFoto)p.foto=await uploadFoto(novaFoto);
-      p.nome=$("#m-nome").value.trim()||"(sem nome)";p.apelido=$("#m-ape").value.trim();p.email=$("#m-email").value.trim();p.telefone=$("#m-tel").value.trim();
+      p.nome=v.nome;p.apelido=v.apelido;p.email=v.email;p.telefone=v.telefone;
       p.curso=$("#m-curso").value.trim();p.periodo=$("#m-per").value.trim();p.dataIngresso=$("#m-ing").value;
-      p.diretoria=$("#m-dir").value;p.cargo=$("#m-cargo").value.trim();p.competencias=$("#m-comp").value.trim();p.linkedin=$("#m-lk").value.trim();
+      p.cargo=v.cargo;p.diretoria=isConselho?"":v.diretoria;p.competencias=$("#m-comp").value.trim();p.linkedin=$("#m-lk").value.trim();
       p.aprovado=dir;
       await Store.savePessoa(p);m.remove();render();toast(dir?"Salvo":"Enviado para aprovação");
-    }catch(e){b.disabled=false;b.textContent="Salvar";toast("Erro ao salvar",true);}
+    }catch(e){b.disabled=false;b.textContent="Salvar";$("#m-err").textContent="Erro ao salvar: "+(e.message||"");toast("Erro ao salvar",true);}
   };
 };
 async function uploadFoto(file){await ensureSB();const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";const path="liga_"+uid()+"."+ext;const {error}=await sb.storage.from("avatars").upload(path,file,{upsert:true,contentType:file.type||"image/jpeg"});if(error)throw error;return sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;}
