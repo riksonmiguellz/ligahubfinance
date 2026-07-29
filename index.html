@@ -112,6 +112,24 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-o
 .tbl tbody tr{transition:background .15s;cursor:pointer}.tbl tbody tr:hover{background:var(--panel-2)}
 /* ===== people/estrutura ===== */
 .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px}
+.rank-list{display:flex;flex-direction:column;gap:9px}
+.rank-row{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 15px;box-shadow:var(--shadow)}
+.rank-row.top{border-color:var(--brand-tint);background:linear-gradient(120deg,var(--panel),var(--brand-tint))}
+.rank-pos{width:34px;text-align:center;font-size:22px;font-weight:800}
+.pface.lg{width:44px;height:44px;font-size:15px}
+.rank-pts{text-align:right;min-width:56px}.rank-pts b{font-size:22px;font-weight:800;color:var(--brand);display:block;line-height:1}.rank-pts span{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+.badge-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;background:var(--warn-tint);color:var(--warn);padding:2px 8px;border-radius:999px}
+.badge-chip .bx{cursor:pointer;color:var(--crit);font-weight:800;margin-left:2px}
+.star-pick .star{font-size:24px;color:#F5A623;cursor:pointer;user-select:none;padding:0 1px}
+.ic-pick{cursor:pointer}
+.pf-overlay{position:fixed;inset:0;z-index:1000;background:var(--bg);overflow-y:auto}
+.pf-topbar{position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+.pf-body{max-width:1080px;margin:0 auto;padding:22px 20px 60px}
+.pf-hero{text-align:center;padding:38px 22px;background:linear-gradient(135deg,var(--brand),var(--deep));border-radius:20px;color:#fff;margin-bottom:26px}
+.pf-hero .pf-badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:rgba(255,255,255,.18);padding:5px 13px;border-radius:999px;margin-bottom:14px}
+.pf-hero h1{font-size:30px;font-weight:800;margin:0 0 8px}.pf-hero p{opacity:.9;font-size:15px;margin:0 auto;max-width:520px}
+.pf-stats{display:flex;justify-content:center;gap:26px;flex-wrap:wrap;margin-top:22px}
+.pf-stat b{display:block;font-size:32px;font-weight:800;line-height:1}.pf-stat span{font-size:12px;opacity:.85}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:6px}
 .cal-h{text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;color:var(--ink-soft);padding:6px 0}
 .cal-cell{min-height:96px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 7px 8px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow);overflow:hidden}
@@ -201,6 +219,7 @@ body.membro .hide-membro{display:none !important}
       <button class="role-btn" id="btnMembro"><span class="ic">👥</span><span><span class="t">Acesso Membro</span><br><span class="d">Projetos, tarefas e o que é meu</span></span></button>
     </div>
     <div class="err" id="gateErr"></div>
+    <button class="link" id="btnPortfolioPub" style="margin-top:14px;font-weight:650;color:var(--brand)">🌐 Ver portfólio público da Liga</button>
     <div id="gateTeam" class="gate-team"></div>
   </div>
 </div>
@@ -227,6 +246,9 @@ body.membro .hide-membro{display:none !important}
     <button data-v="aprovacoes">✔️ Aprovações</button>
     <button data-v="onboarding" class="hide-membro">🎯 Onboarding</button>
     <button data-v="estrutura">🏛️ Estrutura</button>
+    <button data-v="ranking">🏆 Ranking</button>
+    <button data-v="avaliacao">⭐ Avaliação 360</button>
+    <button data-v="portfolio">🌐 Portfólio</button>
     <button data-v="executivo" class="hide-membro">📈 Executivo</button>
     <button data-v="financeiro" class="hide-membro">💰 Financeiro</button>
     <button data-v="crm" class="hide-membro">📇 CRM</button>
@@ -244,6 +266,9 @@ body.membro .hide-membro{display:none !important}
     <div class="view" id="v-aprovacoes"></div>
     <div class="view hide-membro" id="v-onboarding"></div>
     <div class="view" id="v-estrutura"></div>
+    <div class="view" id="v-ranking"></div>
+    <div class="view" id="v-avaliacao"></div>
+    <div class="view" id="v-portfolio"></div>
     <div class="view hide-membro" id="v-executivo"></div>
     <div class="view hide-membro" id="v-financeiro"></div>
     <div class="view hide-membro" id="v-crm"></div>
@@ -272,7 +297,7 @@ const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
 let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0;
-let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[],FINANCEIRO=[];
+let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[],FINANCEIRO=[],CONQUISTAS=[],AVALIACOES=[];
 let VIEW="dashboard",PROJ_VIEW="kanban",EU="";
 try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
 
@@ -297,6 +322,10 @@ const evToRow=e=>({id:e.id,nome:e.nome,tipo:e.tipo||"Palestra",objetivo:e.objeti
 const rowToEv=r=>({id:r.id,nome:r.nome,tipo:r.tipo||"Palestra",objetivo:r.objetivo||"",data:r.data||"",hora:r.hora||"",local:r.local||"",link:r.link||"",equipe:r.equipe||[],cronograma:r.cronograma||[],inscritos:r.inscritos||[],resultado:r.resultado||"",status:r.status||"Planejado"});
 const finToRow=f=>({id:f.id,tipo:f.tipo||"Despesa",categoria:f.categoria||"",descricao:f.descricao||"",valor:Number(f.valor)||0,data:f.data||null,diretoria:f.diretoria||"",status:f.status||"Previsto"});
 const rowToFin=r=>({id:r.id,tipo:r.tipo||"Despesa",categoria:r.categoria||"",descricao:r.descricao||"",valor:Number(r.valor)||0,data:r.data||"",diretoria:r.diretoria||"",status:r.status||"Previsto"});
+const cqToRow=c=>({id:c.id,pessoa:c.pessoa||"",titulo:c.titulo||"",icone:c.icone||"🏅",pontos:Number(c.pontos)||0,motivo:c.motivo||""});
+const rowToCq=r=>({id:r.id,pessoa:r.pessoa||"",titulo:r.titulo||"",icone:r.icone||"🏅",pontos:Number(r.pontos)||0,motivo:r.motivo||""});
+const avToRow=a=>({id:a.id,ciclo:a.ciclo||"",avaliador:a.avaliador||"",avaliado:a.avaliado||"",scores:a.scores||{},comentario:a.comentario||""});
+const rowToAv=r=>({id:r.id,ciclo:r.ciclo||"",avaliador:r.avaliador||"",avaliado:r.avaliado||"",scores:r.scores||{},comentario:r.comentario||""});
 
 /* ---------- supabase ---------- */
 async function ensureSB(){if(sb)return sb;if(!window.supabase){await new Promise((res,rej)=>{const s=document.createElement("script");s.src=CDN;s.onload=res;s.onerror=()=>rej(new Error("Falha ao carregar Supabase"));document.head.appendChild(s);});}sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);return sb;}
@@ -306,7 +335,7 @@ const Store={
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
     await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
-    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos","liga_financeiro"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
+    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos","liga_financeiro","liga_conquistas","liga_avaliacoes"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
     sb.channel("rt-liga-notif").on("postgres_changes",{event:"*",schema:"public",table:"liga_notificacoes"},()=>{if(Date.now()-lastWrite>1500)this.reload().then(()=>renderBell()).catch(()=>{});}).subscribe();
   },
   async reload(){
@@ -323,6 +352,8 @@ const Store={
     const [ca,ap,mu,ev]=await Promise.all([sb.from("liga_candidatos").select("*").order("created_at",{ascending:false}),sb.from("liga_aprovacoes").select("*").order("created_at",{ascending:false}),sb.from("liga_mural").select("*").order("created_at",{ascending:false}),sb.from("liga_eventos").select("*").order("data",{ascending:false})]);
     CANDIDATOS=(ca.data||[]).map(rowToCand);APROVACOES=(ap.data||[]).map(rowToAp);MURAL=(mu.data||[]).map(rowToMu);EVENTOS=(ev.data||[]).map(rowToEv);
     if(SESSION){const fi=await sb.from("liga_financeiro").select("*").order("data",{ascending:false});FINANCEIRO=(fi.data||[]).map(rowToFin);}else FINANCEIRO=[];
+    const [cq,av]=await Promise.all([sb.from("liga_conquistas").select("*").order("created_at",{ascending:false}),sb.from("liga_avaliacoes").select("*").order("created_at",{ascending:false})]);
+    CONQUISTAS=(cq.data||[]).map(rowToCq);AVALIACOES=(av.data||[]).map(rowToAv);
     const n=await sb.from("liga_notificacoes").select("*").order("criado_em",{ascending:false}).limit(200);
     NOTIF=(n.data||[]);
   },
@@ -340,6 +371,10 @@ const Store={
   async delEvento(id){lastWrite=Date.now();EVENTOS=EVENTOS.filter(y=>y.id!==id);const {error}=await sb.from("liga_eventos").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveFin(x){lastWrite=Date.now();const i=FINANCEIRO.findIndex(y=>y.id===x.id);if(i>=0)FINANCEIRO[i]=x;else FINANCEIRO.unshift(x);const {error}=await sb.from("liga_financeiro").upsert(finToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
   async delFin(id){lastWrite=Date.now();FINANCEIRO=FINANCEIRO.filter(y=>y.id!==id);const {error}=await sb.from("liga_financeiro").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
+  async saveConquista(x){lastWrite=Date.now();const i=CONQUISTAS.findIndex(y=>y.id===x.id);if(i>=0)CONQUISTAS[i]=x;else CONQUISTAS.unshift(x);const {error}=await sb.from("liga_conquistas").upsert(cqToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delConquista(id){lastWrite=Date.now();CONQUISTAS=CONQUISTAS.filter(y=>y.id!==id);const {error}=await sb.from("liga_conquistas").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
+  async saveAvaliacao(x){lastWrite=Date.now();const i=AVALIACOES.findIndex(y=>y.id===x.id);if(i>=0)AVALIACOES[i]=x;else AVALIACOES.unshift(x);const {error}=await sb.from("liga_avaliacoes").upsert(avToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delAvaliacao(id){lastWrite=Date.now();AVALIACOES=AVALIACOES.filter(y=>y.id!==id);const {error}=await sb.from("liga_avaliacoes").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async savePessoa(p){lastWrite=Date.now();const i=PESSOAS.findIndex(x=>x.id===p.id);if(i>=0)PESSOAS[i]=p;else PESSOAS.push(p);const {error}=await sb.from("liga_pessoas").upsert(pToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
   async delPessoa(id){lastWrite=Date.now();PESSOAS=PESSOAS.filter(x=>x.id!==id);const {error}=await sb.from("liga_pessoas").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveProjeto(p){lastWrite=Date.now();const i=PROJETOS.findIndex(x=>x.id===p.id);if(i>=0)PROJETOS[i]=p;else PROJETOS.unshift(p);const {error}=await sb.from("liga_projetos").upsert(prToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
@@ -363,6 +398,7 @@ $("#btnDir").onclick=()=>{$("#pwRow").classList.add("show");($("#email").value?$
 $("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 async function doLogin(){const b=$("#pwGo");b.disabled=true;$("#gateErr").textContent="";try{await Store.login($("#email").value.trim(),$("#pw").value);enter("direcao");}catch(e){$("#gateErr").textContent=e.message||"Falha.";$("#pw").select();}finally{b.disabled=false;}}
 $("#btnMembro").onclick=async()=>{try{if(SESSION)await Store.logout();}catch(e){}enter("membro");};
+$("#btnPortfolioPub").onclick=()=>openPortfolioPublic();
 function enter(role){ROLE=role;$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");try{window.BGFX&&window.BGFX.stop();}catch(e){}document.body.classList.toggle("membro",role==="membro");$("#rolePill").textContent=role==="direcao"?"Direção":"Membro";switchView("dashboard");render();}
 $("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";$("#pwRow").classList.remove("show");try{window.BGFX&&window.BGFX.start();}catch(e){}};
 
@@ -372,7 +408,7 @@ function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.
 $("#btnNovoProj").onclick=()=>projModal(null);
 $("#bellBtn").onclick=()=>notifModal();
 
-function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();renderGateTeam();}
+function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();else if(VIEW==="ranking")renderRanking();else if(VIEW==="avaliacao")renderAvaliacao();else if(VIEW==="portfolio")renderPortfolio();renderGateTeam();}
 
 /* ---------- DASHBOARD ---------- */
 function renderDash(){
@@ -561,7 +597,7 @@ function renderPessoas(){
 }
 function drawPessoas(term){
   const t=(term||"").toLowerCase();
-  const rows=PESSOAS.slice().sort((a,b)=>(a.ordem||0)-(b.ordem||0)).filter(p=>!t||(p.nome+" "+(p.cargo||"")+" "+(p.diretoria||"")+" "+(p.competencias||"")).toLowerCase().includes(t));
+  const rows=PESSOAS.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt",{sensitivity:"base"})).filter(p=>!t||(p.nome+" "+(p.cargo||"")+" "+(p.diretoria||"")+" "+(p.competencias||"")).toLowerCase().includes(t));
   $("#pBody").innerHTML=rows.map(pessoaCard).join("")||`<div class="empty" style="grid-column:1/-1">Nenhuma pessoa.</div>`;
   wirePessoas();
 }
@@ -646,7 +682,7 @@ function renderEstrutura(){
 }
 
 /* ---------- CRM ---------- */
-function crmRows(){return PESSOAS.slice().sort((a,b)=>(a.ordem||0)-(b.ordem||0));}
+function crmRows(){return PESSOAS.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt",{sensitivity:"base"}));}
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
 function exportCSV(){
   const rows=crmRows();const head=["Nome","Apelido","E-mail","Telefone","Diretoria","Cargo","Curso","Período","Status"];
@@ -757,6 +793,129 @@ window.muralModal=id=>{const editing=!!id;const x=editing?Object.assign({},MURAL
   $("#modalMount").appendChild(m);m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
   $("#mu-save").onclick=async()=>{x.titulo=$("#mu-tit").value.trim()||"(sem título)";x.texto=$("#mu-txt").value.trim();x.fixado=$("#mu-fix").checked;const b=$("#mu-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveMural(x);m.remove();render();toast(editing?"Salvo":"Aviso publicado");}catch(e){b.disabled=false;b.textContent="Salvar";toast("Erro",true);}};
 };
+
+/* ---------- GAMIFICAÇÃO (RANKING) ---------- */
+const PTS={tarefa:10,projeto:50,evento:15,reuniao:5,ideia:20};
+function pontosAuto(nome){
+  let p=0,det={tarefas:0,projetos:0,eventos:0,reunioes:0,ideias:0};
+  TAREFAS.forEach(t=>{if(t.responsavel===nome&&t.status==="concluida"){p+=PTS.tarefa;det.tarefas++;}});
+  PROJETOS.forEach(pr=>{if(pr.status==="Concluído"&&(pr.lider===nome||(pr.equipe||[]).includes(nome))){p+=PTS.projeto;det.projetos++;}});
+  EVENTOS.forEach(e=>{if(e.status==="Realizado"&&(e.equipe||[]).includes(nome)){p+=PTS.evento;det.eventos++;}});
+  REUNIOES.forEach(r=>{if((r.presenca||[]).includes(nome)){p+=PTS.reuniao;det.reunioes++;}});
+  IDEIAS.forEach(i=>{if(i.autor===nome&&(i.status==="Aprovada"||i.status==="Convertida")){p+=PTS.ideia;det.ideias++;}});
+  return {p,det};
+}
+function pontosPessoa(nome){const a=pontosAuto(nome);const man=CONQUISTAS.filter(c=>c.pessoa===nome).reduce((s,c)=>s+(+c.pontos||0),0);return {total:a.p+man,auto:a.p,manual:man,det:a.det};}
+function rankingLista(){return PESSOAS.map(p=>({nome:p.nome,foto:p.foto,diretoria:p.diretoria,cargo:p.cargo,...pontosPessoa(p.nome),badges:CONQUISTAS.filter(c=>c.pessoa===p.nome)})).sort((a,b)=>b.total-a.total);}
+function renderRanking(){
+  const el=$("#v-ranking");const dir=ROLE==="direcao";const lista=rankingLista();
+  const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`<span style="color:var(--ink-soft);font-weight:700">${i+1}º</span>`;
+  const totalBadges=CONQUISTAS.length;
+  el.innerHTML=`
+    <div class="toolbar"><h2 style="font-size:19px;margin:0">🏆 Ranking & Conquistas</h2><div style="flex:1"></div>${dir?`<button class="btn sm" onclick="conquistaModal()">+ Dar conquista</button>`:""}</div>
+    <div class="panel" style="background:linear-gradient(135deg,var(--brand),var(--deep));color:#fff;border:none">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;opacity:.85;font-weight:700">Como pontuar</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px">
+        <span>✅ Tarefa concluída <b>+${PTS.tarefa}</b></span><span>🗂️ Projeto entregue <b>+${PTS.projeto}</b></span><span>🎤 Evento organizado <b>+${PTS.evento}</b></span><span>📅 Presença em reunião <b>+${PTS.reuniao}</b></span><span>💡 Ideia aprovada <b>+${PTS.ideia}</b></span><span>🏅 Conquistas da Direção</span>
+      </div></div>
+    <div class="rank-list">
+      ${lista.length?lista.map((r,i)=>`<div class="rank-row${i<3?" top":""}">
+        <div class="rank-pos">${medal(i)}</div>
+        <span class="pface lg">${r.foto?`<img src="${esc(r.foto)}" alt="">`:esc(iniciais(r.nome))}</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(r.nome)}</div><div style="font-size:12px;color:var(--ink-soft)">${esc(r.cargo||"")}${r.diretoria?" · "+esc(r.diretoria):""}</div>
+          ${r.badges.length?`<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${r.badges.map(b=>`<span class="badge-chip" title="${esc(b.titulo)}${b.motivo?" — "+esc(b.motivo):""}">${b.icone} ${esc(b.titulo)}${dir?` <span class="bx" data-cqdel="${b.id}">×</span>`:""}</span>`).join("")}</div>`:""}
+        </div>
+        <div class="rank-pts"><b>${r.total}</b><span>pts</span></div>
+      </div>`).join(""):`<div class="empty">Cadastre pessoas para ver o ranking.</div>`}
+    </div>`;
+  el.querySelectorAll("[data-cqdel]").forEach(b=>b.onclick=async(e)=>{e.stopPropagation();if(confirm("Remover conquista?")){try{await Store.delConquista(b.dataset.cqdel);render();toast("Removida");}catch(x){toast("Erro",true);}}});
+}
+window.conquistaModal=()=>{
+  const x={id:uid(),pessoa:"",titulo:"",icone:"🏅",pontos:20,motivo:""};
+  const m=document.createElement("div");m.className="modal-bg";
+  const icones=["🏅","🏆","⭐","🔥","🚀","💎","🧠","🤝","👑","🎯","💪","📈"];
+  const pOpts=`<option value="">— escolher —</option>`+[...PESSOAS].sort((a,b)=>a.nome.localeCompare(b.nome,"pt")).map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}</option>`).join("");
+  m.innerHTML=`<div class="modal" style="max-width:480px"><div class="modal-head"><h2>Dar conquista</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field"><label>Para quem</label><select id="cq-pessoa">${pOpts}</select></div>
+    <div class="field"><label>Ícone</label><div id="cq-icones" style="display:flex;gap:6px;flex-wrap:wrap">${icones.map(ic=>`<button type="button" class="ic-pick" data-ic="${ic}" style="font-size:20px;width:40px;height:40px;border:1px solid var(--line-strong);border-radius:10px;background:var(--panel-2)">${ic}</button>`).join("")}</div></div>
+    <div class="field-row"><div class="field"><label>Título</label><input id="cq-titulo" placeholder="Ex.: Destaque do mês"></div><div class="field"><label>Pontos</label><input id="cq-pontos" type="number" value="20"></div></div>
+    <div class="field"><label>Motivo (opcional)</label><input id="cq-motivo" placeholder="Pelo quê?"></div>
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn" id="cq-save">Conceder</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  let ic="🏅";m.querySelectorAll("[data-ic]").forEach(b=>b.onclick=()=>{ic=b.dataset.ic;m.querySelectorAll("[data-ic]").forEach(z=>z.style.borderColor="var(--line-strong)");b.style.borderColor="var(--brand)";});
+  m.querySelector('[data-ic="🏅"]').style.borderColor="var(--brand)";
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=ev=>{if(ev.target===m)m.remove();};
+  $("#cq-save").onclick=async()=>{const pessoa=$("#cq-pessoa").value;const titulo=$("#cq-titulo").value.trim();if(!pessoa||!titulo){toast("Escolha a pessoa e o título",true);return;}x.pessoa=pessoa;x.titulo=titulo;x.icone=ic;x.pontos=parseInt($("#cq-pontos").value)||0;x.motivo=$("#cq-motivo").value.trim();const b=$("#cq-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveConquista(x);await Store.notificar(pessoa,"🏅 Você recebeu uma conquista!",titulo+(x.motivo?" — "+x.motivo:""));m.remove();render();toast("Conquista concedida");}catch(e){b.disabled=false;b.textContent="Conceder";toast("Erro",true);}};
+};
+
+/* ---------- AVALIAÇÃO 360 ---------- */
+const AV_CRIT=["Comprometimento","Colaboração","Proatividade","Entrega","Comunicação"];
+function avMedia(nome){const recs=AVALIACOES.filter(a=>a.avaliado===nome);if(!recs.length)return {media:0,n:0,porCrit:{}};let soma=0,cont=0;const porCrit={};AV_CRIT.forEach(c=>{let s=0,k=0;recs.forEach(a=>{const v=+(a.scores||{})[c];if(v){s+=v;k++;soma+=v;cont++;}});porCrit[c]=k?s/k:0;});return {media:cont?soma/cont:0,n:recs.length,porCrit};}
+function stars(v){const f=Math.round(v);return "★★★★★".slice(0,f)+"☆☆☆☆☆".slice(0,5-f);}
+function renderAvaliacao(){
+  const el=$("#v-avaliacao");const dir=ROLE==="direcao";
+  const lista=PESSOAS.map(p=>({nome:p.nome,foto:p.foto,cargo:p.cargo,diretoria:p.diretoria,...avMedia(p.nome)})).sort((a,b)=>b.media-a.media);
+  el.innerHTML=`
+    <div class="toolbar"><h2 style="font-size:19px;margin:0">⭐ Avaliação 360</h2><div style="flex:1"></div><button class="btn sm" onclick="avaliacaoModal()">+ Avaliar alguém</button></div>
+    <div class="panel" style="font-size:13px;color:var(--ink-soft)">Cada membro avalia os colegas em 5 critérios (1 a 5). As médias abaixo somam todas as avaliações recebidas. Total de avaliações registradas: <b style="color:var(--ink)">${AVALIACOES.length}</b>.</div>
+    <div class="grid-cards">
+      ${lista.map(p=>`<div class="pcard2"><div style="display:flex;gap:10px;align-items:center"><span class="pface">${p.foto?`<img src="${esc(p.foto)}" alt="">`:esc(iniciais(p.nome))}</span><div style="flex:1;min-width:0"><div style="font-weight:700">${esc(p.nome)}</div><div style="font-size:12px;color:var(--ink-soft)">${esc(p.cargo||"")}</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:800;color:var(--brand)">${p.media?p.media.toFixed(1):"—"}</div><div style="font-size:10px;color:var(--ink-soft)">${p.n} aval.</div></div></div>
+        ${p.n?`<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">${AV_CRIT.map(c=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:120px;color:var(--ink-soft)">${c}</span><span style="color:#F5A623;letter-spacing:1px">${stars(p.porCrit[c])}</span></div>`).join("")}</div>`:`<div style="margin-top:8px;font-size:12px;color:var(--ink-soft)">Sem avaliações ainda.</div>`}
+        ${dir&&p.n?`<div class="p2-actions"><button class="btn ghost sm" data-avver="${esc(p.nome)}">Ver comentários</button></div>`:""}
+      </div>`).join("")}
+    </div>`;
+  el.querySelectorAll("[data-avver]").forEach(b=>b.onclick=()=>avComentarios(b.dataset.avver));
+}
+function avComentarios(nome){
+  const recs=AVALIACOES.filter(a=>a.avaliado===nome);const dir=ROLE==="direcao";
+  const m=document.createElement("div");m.className="modal-bg";
+  m.innerHTML=`<div class="modal" style="max-width:520px"><div class="modal-head"><h2>Avaliações de ${esc(nome)}</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    ${recs.length?recs.map(a=>`<div class="panel" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft)"><span>por ${esc(a.avaliador||"anônimo")}</span>${a.ciclo?`<span>${esc(a.ciclo)}</span>`:""}</div><div style="font-size:12px;margin:6px 0">${AV_CRIT.map(c=>`${c}: <b>${(a.scores||{})[c]||"—"}</b>`).join(" · ")}</div>${a.comentario?`<div style="font-size:13px">${esc(a.comentario)}</div>`:""}${dir?`<button class="link" style="color:var(--crit);margin-top:6px" data-avdel="${a.id}">excluir</button>`:""}</div>`).join(""):`<div class="empty">Sem avaliações.</div>`}
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Fechar</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=ev=>{if(ev.target===m)m.remove();};
+  m.querySelectorAll("[data-avdel]").forEach(b=>b.onclick=async()=>{if(confirm("Excluir avaliação?")){try{await Store.delAvaliacao(b.dataset.avdel);m.remove();render();toast("Excluída");}catch(x){toast("Erro",true);}}});
+}
+window.avaliacaoModal=()=>{
+  const a={id:uid(),ciclo:"",avaliador:EU||"",avaliado:"",scores:{},comentario:""};
+  const m=document.createElement("div");m.className="modal-bg";
+  const opts=nome=>`<option value="">— escolher —</option>`+[...PESSOAS].sort((x,y)=>x.nome.localeCompare(y.nome,"pt")).map(p=>`<option value="${esc(p.nome)}" ${nome===p.nome?"selected":""}>${esc(p.nome)}</option>`).join("");
+  m.innerHTML=`<div class="modal" style="max-width:500px"><div class="modal-head"><h2>Nova avaliação 360</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field-row"><div class="field"><label>Quem avalia</label><select id="av-quem">${opts(a.avaliador)}</select></div><div class="field"><label>Avaliando</label><select id="av-alvo">${opts("")}</select></div></div>
+    <div class="field"><label>Ciclo (opcional)</label><input id="av-ciclo" placeholder="Ex.: 2026.1"></div>
+    <div class="field"><label>Notas (1 a 5)</label><div id="av-crits" style="display:flex;flex-direction:column;gap:8px">${AV_CRIT.map(c=>`<div style="display:flex;align-items:center;gap:10px"><span style="width:130px;font-size:13px">${c}</span><div class="star-pick" data-crit="${c}">${[1,2,3,4,5].map(n=>`<span class="star" data-n="${n}">☆</span>`).join("")}</div></div>`).join("")}</div></div>
+    <div class="field"><label>Comentário (opcional)</label><textarea id="av-com" rows="2" placeholder="Feedback construtivo..."></textarea></div>
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn" id="av-save">Enviar avaliação</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  m.querySelectorAll(".star-pick").forEach(sp=>{const crit=sp.dataset.crit;sp.querySelectorAll(".star").forEach(st=>{st.onclick=()=>{const n=+st.dataset.n;a.scores[crit]=n;sp.querySelectorAll(".star").forEach(z=>z.textContent=(+z.dataset.n<=n)?"★":"☆");};});});
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=ev=>{if(ev.target===m)m.remove();};
+  $("#av-save").onclick=async()=>{a.avaliador=$("#av-quem").value;a.avaliado=$("#av-alvo").value;a.ciclo=$("#av-ciclo").value.trim();a.comentario=$("#av-com").value.trim();if(!a.avaliado){toast("Escolha quem está sendo avaliado",true);return;}if(a.avaliador&&a.avaliador===a.avaliado){toast("Não dá pra se autoavaliar aqui",true);return;}if(!Object.keys(a.scores).length){toast("Dê ao menos uma nota",true);return;}const b=$("#av-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveAvaliacao(a);m.remove();render();toast("Avaliação enviada");}catch(e){b.disabled=false;b.textContent="Enviar avaliação";toast("Erro",true);}};
+};
+
+/* ---------- PORTFÓLIO PÚBLICO ---------- */
+function portfolioHTML(){
+  const concl=PROJETOS.filter(p=>p.status==="Concluído");
+  const evs=EVENTOS.filter(e=>e.status==="Realizado");
+  const stat=(v,l)=>`<div class="pf-stat"><b>${v}</b><span>${l}</span></div>`;
+  return `
+    <div class="pf-hero">
+      <div class="pf-badge">LigaHub Finance</div>
+      <h1>O que a Liga já construiu</h1>
+      <p>Projetos entregues, eventos realizados e um time que faz acontecer.</p>
+      <div class="pf-stats">${stat(concl.length,"projetos entregues")}${stat(evs.length,"eventos realizados")}${stat(PESSOAS.length,"membros")}${stat(DIRETORIAS.length,"diretorias")}</div>
+    </div>
+    <div class="sec-title">Projetos entregues</div>
+    <div class="grid-cards">${concl.length?concl.map(p=>`<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(p.nome)}</h4><span class="chip" style="background:var(--ok-tint);color:var(--ok)">Concluído</span></div>${p.diretoria?`<span class="tag dir">${esc(p.diretoria)}</span>`:""}${p.descricao||p.objetivo?`<div style="font-size:13px;color:var(--ink-soft)">${esc((p.descricao||p.objetivo)).slice(0,140)}</div>`:""}${(p.equipe||[]).length?`<div class="p2-tags">${p.equipe.slice(0,6).map(n=>faceHtml(n)).join("")}</div>`:""}</div>`).join(""):`<div class="empty" style="grid-column:1/-1">Em breve os primeiros projetos entregues.</div>`}</div>
+    <div class="sec-title">Eventos realizados</div>
+    <div class="grid-cards">${evs.length?evs.map(e=>`<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(e.nome)}</h4><span class="chip" style="background:var(--brand-tint);color:var(--brand)">${esc(e.tipo)}</span></div><div style="font-size:12px;color:var(--ink-soft)">${e.data?brDate(e.data):""}${e.local?" · "+esc(e.local):""}</div>${e.objetivo?`<div style="font-size:13px;color:var(--ink-soft)">${esc(e.objetivo).slice(0,120)}</div>`:""}${(e.inscritos||[]).length?`<div style="font-size:12px;color:var(--ink-soft)">${e.inscritos.length} participante(s)</div>`:""}</div>`).join(""):`<div class="empty" style="grid-column:1/-1">Em breve os primeiros eventos.</div>`}</div>`;
+}
+function renderPortfolio(){$("#v-portfolio").innerHTML=`<div class="toolbar"><h2 style="font-size:19px;margin:0">🌐 Portfólio</h2><div style="flex:1"></div><span style="font-size:12px;color:var(--ink-soft)">Esta é a visão pública compartilhável</span></div>`+portfolioHTML();}
+function openPortfolioPublic(){
+  const m=document.createElement("div");m.className="pf-overlay";
+  m.innerHTML=`<div class="pf-topbar"><b>🌐 Portfólio · LigaHub Finance</b><button class="btn ghost sm" id="pf-close">✕ Fechar</button></div><div class="pf-body">${portfolioHTML()}</div>`;
+  document.body.appendChild(m);
+  m.querySelector("#pf-close").onclick=()=>m.remove();
+}
 
 /* ---------- FINANCEIRO / EXECUTIVO ---------- */
 const brMoney=v=>"R$ "+(Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
