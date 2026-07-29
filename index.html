@@ -205,6 +205,8 @@ body.membro .hide-membro{display:none !important}
     <button data-v="projetos">🗂️ Projetos</button>
     <button data-v="tarefas">✅ Tarefas</button>
     <button data-v="pessoas">👤 Pessoas</button>
+    <button data-v="ideias">💡 Ideias</button>
+    <button data-v="reunioes">📅 Reuniões</button>
     <button data-v="estrutura">🏛️ Estrutura</button>
     <button data-v="crm" class="hide-membro">📇 CRM</button>
   </div>
@@ -213,6 +215,8 @@ body.membro .hide-membro{display:none !important}
     <div class="view" id="v-projetos"></div>
     <div class="view" id="v-tarefas"></div>
     <div class="view" id="v-pessoas"></div>
+    <div class="view" id="v-ideias"></div>
+    <div class="view" id="v-reunioes"></div>
     <div class="view" id="v-estrutura"></div>
     <div class="view hide-membro" id="v-crm"></div>
   </div>
@@ -240,7 +244,7 @@ const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
 let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0;
-let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[];
+let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[];
 let VIEW="dashboard",PROJ_VIEW="kanban",EU="";
 try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
 
@@ -251,6 +255,10 @@ const prToRow=p=>({id:p.id,nome:p.nome,objetivo:p.objetivo||"",descricao:p.descr
 const rowToPr=r=>({id:r.id,nome:r.nome,objetivo:r.objetivo||"",descricao:r.descricao||"",diretoria:r.diretoria||"",lider:r.lider||"",equipe:r.equipe||[],prioridade:r.prioridade||"Média",dataInicio:r.data_inicio||"",prazo:r.prazo||"",status:r.status||"Ideia",percentual:+r.percentual||0,checklist:r.checklist||[],comentarios:r.comentarios||[],arquivos:r.arquivos||[],ordem:r.ordem||0});
 const tToRow=t=>({id:t.id,titulo:t.titulo,descricao:t.descricao||"",projeto_id:t.projetoId||null,projeto:t.projeto||"",responsavel:t.responsavel||"",prioridade:t.prioridade||"Média",prazo:t.prazo||null,status:t.status||"pendente",checklist:t.checklist||[],comentarios:t.comentarios||[]});
 const rowToT=r=>({id:r.id,titulo:r.titulo,descricao:r.descricao||"",projetoId:r.projeto_id||"",projeto:r.projeto||"",responsavel:r.responsavel||"",prioridade:r.prioridade||"Média",prazo:r.prazo||"",status:r.status||"pendente",checklist:r.checklist||[],comentarios:r.comentarios||[]});
+const iToRow=x=>({id:x.id,titulo:x.titulo,descricao:x.descricao||"",autor:x.autor||"",categoria:x.categoria||"",beneficios:x.beneficios||"",prioridade:x.prioridade||"Média",status:x.status||"Nova",projeto_id:x.projetoId||null});
+const rowToI=r=>({id:r.id,titulo:r.titulo,descricao:r.descricao||"",autor:r.autor||"",categoria:r.categoria||"",beneficios:r.beneficios||"",prioridade:r.prioridade||"Média",status:r.status||"Nova",projetoId:r.projeto_id||"",createdAt:r.created_at});
+const rToRow=x=>({id:x.id,titulo:x.titulo,data:x.data||null,hora:x.hora||"",local:x.local||"",link:x.link||"",participantes:x.participantes||[],pauta:x.pauta||"",presenca:x.presenca||[],pendencias:x.pendencias||[],responsaveis:x.responsaveis||"",ata:x.ata||"",proxima:x.proxima||null});
+const rowToR=r=>({id:r.id,titulo:r.titulo,data:r.data||"",hora:r.hora||"",local:r.local||"",link:r.link||"",participantes:r.participantes||[],pauta:r.pauta||"",presenca:r.presenca||[],pendencias:r.pendencias||[],responsaveis:r.responsaveis||"",ata:r.ata||"",proxima:r.proxima||""});
 
 /* ---------- supabase ---------- */
 async function ensureSB(){if(sb)return sb;if(!window.supabase){await new Promise((res,rej)=>{const s=document.createElement("script");s.src=CDN;s.onload=res;s.onerror=()=>rej(new Error("Falha ao carregar Supabase"));document.head.appendChild(s);});}sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);return sb;}
@@ -260,20 +268,27 @@ const Store={
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
     await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
-    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
+    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
     sb.channel("rt-liga-notif").on("postgres_changes",{event:"*",schema:"public",table:"liga_notificacoes"},()=>{if(Date.now()-lastWrite>1500)this.reload().then(()=>renderBell()).catch(()=>{});}).subscribe();
   },
   async reload(){
-    const [d,p,pr,t]=await Promise.all([
+    const [d,p,pr,t,id,re]=await Promise.all([
       sb.from("liga_diretorias").select("*").order("ordem"),
       sb.from("liga_pessoas").select("*").order("ordem"),
       sb.from("liga_projetos").select("*").order("updated_at",{ascending:false}),
-      sb.from("liga_tarefas").select("*").order("created_at",{ascending:false})
+      sb.from("liga_tarefas").select("*").order("created_at",{ascending:false}),
+      sb.from("liga_ideias").select("*").order("created_at",{ascending:false}),
+      sb.from("liga_reunioes").select("*").order("data",{ascending:false})
     ]);
     DIRETORIAS=(d.data||[]);PESSOAS=(p.data||[]).map(rowToP);PROJETOS=(pr.data||[]).map(rowToPr);TAREFAS=(t.data||[]).map(rowToT);
+    IDEIAS=(id.data||[]).map(rowToI);REUNIOES=(re.data||[]).map(rowToR);
     const n=await sb.from("liga_notificacoes").select("*").order("criado_em",{ascending:false}).limit(200);
     NOTIF=(n.data||[]);
   },
+  async saveIdeia(x){lastWrite=Date.now();const i=IDEIAS.findIndex(y=>y.id===x.id);if(i>=0)IDEIAS[i]=x;else IDEIAS.unshift(x);const {error}=await sb.from("liga_ideias").upsert(iToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delIdeia(id){lastWrite=Date.now();IDEIAS=IDEIAS.filter(y=>y.id!==id);const {error}=await sb.from("liga_ideias").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
+  async saveReuniao(x){lastWrite=Date.now();const i=REUNIOES.findIndex(y=>y.id===x.id);if(i>=0)REUNIOES[i]=x;else REUNIOES.unshift(x);const {error}=await sb.from("liga_reunioes").upsert(rToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delReuniao(id){lastWrite=Date.now();REUNIOES=REUNIOES.filter(y=>y.id!==id);const {error}=await sb.from("liga_reunioes").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async savePessoa(p){lastWrite=Date.now();const i=PESSOAS.findIndex(x=>x.id===p.id);if(i>=0)PESSOAS[i]=p;else PESSOAS.push(p);const {error}=await sb.from("liga_pessoas").upsert(pToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
   async delPessoa(id){lastWrite=Date.now();PESSOAS=PESSOAS.filter(x=>x.id!==id);const {error}=await sb.from("liga_pessoas").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveProjeto(p){lastWrite=Date.now();const i=PROJETOS.findIndex(x=>x.id===p.id);if(i>=0)PROJETOS[i]=p;else PROJETOS.unshift(p);const {error}=await sb.from("liga_projetos").upsert(prToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
@@ -306,7 +321,7 @@ function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.
 $("#btnNovoProj").onclick=()=>projModal(null);
 $("#bellBtn").onclick=()=>notifModal();
 
-function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();renderGateTeam();}
+function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();renderGateTeam();}
 
 /* ---------- DASHBOARD ---------- */
 function renderDash(){
@@ -608,6 +623,48 @@ function renderCRM(){
   $("#crmCsv").onclick=exportCSV;
   $("#crmXlsx").onclick=async()=>{const b=$("#crmXlsx");b.disabled=true;b.textContent="Gerando...";try{await exportXLSX();}catch(e){toast("Erro no Excel",true);}b.disabled=false;b.textContent="⬇ Excel (XLSX)";};
 }
+
+/* ---------- IDEIAS ---------- */
+const ISTATUS=["Nova","Em análise","Aprovada","Convertida","Descartada"];
+const ICOR={"Nova":"#2563EB","Em análise":"#C67C00","Aprovada":"#12A150","Convertida":"#0E9F8E","Descartada":"#8b93a3"};
+function renderIdeias(){const el=$("#v-ideias");el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input id="qI" placeholder="Buscar ideia..."></div><button class="btn sm" onclick="ideiaModal(null)">+ Nova ideia</button></div><div id="iBody"></div>`;const q=$("#qI");q.oninput=()=>drawIdeias(q.value);drawIdeias("");}
+function drawIdeias(term){const t=(term||"").toLowerCase();const rows=IDEIAS.filter(x=>!t||(x.titulo+" "+(x.descricao||"")+" "+(x.autor||"")+" "+(x.categoria||"")).toLowerCase().includes(t));$("#iBody").innerHTML=`<div class="grid-cards">${rows.map(ideiaCard).join("")||`<div class="empty" style="grid-column:1/-1">Nenhuma ideia ainda. Registre a primeira!</div>`}</div>`;wireIdeias();}
+function ideiaCard(x){const dir=ROLE==="direcao";return `<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(x.titulo)}</h4><span class="chip" style="background:${ICOR[x.status]}22;color:${ICOR[x.status]}">${x.status}</span></div><div>${x.categoria?`<span class="tag">${esc(x.categoria)}</span> `:""}<span class="prio prio-${x.prioridade}">${x.prioridade}</span></div>${x.descricao?`<div style="font-size:13px;color:var(--ink-soft)">${esc(x.descricao).slice(0,140)}</div>`:""}${x.autor?`<div style="font-size:12px;color:var(--ink-soft)">por ${esc(x.autor)}</div>`:""}<div class="p2-actions"><button class="btn ghost sm" data-ied="${x.id}">Ver / editar</button>${dir&&x.status!=="Convertida"?`<button class="btn sm" data-iconv="${x.id}">Vira projeto</button>`:""}${dir?`<button class="link" style="color:var(--crit)" data-idel="${x.id}">remover</button>`:""}</div></div>`;}
+function wireIdeias(){$("#iBody").querySelectorAll("[data-ied]").forEach(b=>b.onclick=()=>ideiaModal(b.dataset.ied));$("#iBody").querySelectorAll("[data-iconv]").forEach(b=>b.onclick=()=>converterIdeia(b.dataset.iconv));$("#iBody").querySelectorAll("[data-idel]").forEach(b=>b.onclick=async()=>{if(confirm("Remover ideia?")){try{await Store.delIdeia(b.dataset.idel);render();toast("Removida");}catch(e){toast("Erro",true);}}});}
+window.ideiaModal=id=>{const editing=!!id;const dir=ROLE==="direcao";const x=editing?Object.assign({},IDEIAS.find(y=>y.id===id)):{id:uid(),titulo:"",descricao:"",autor:"",categoria:"",beneficios:"",prioridade:"Média",status:"Nova"};const m=document.createElement("div");m.className="modal-bg";const autorOpts=`<option value="">—</option>`+PESSOAS.map(p=>`<option value="${esc(p.nome)}" ${x.autor===p.nome?"selected":""}>${esc(p.nome)}</option>`).join("");
+  m.innerHTML=`<div class="modal" style="max-width:560px"><div class="modal-head"><h2>${editing?"Ideia":"Nova ideia"}</h2><button class="close-x" data-x>×</button></div><div class="modal-body"><div class="field"><label>Título</label><input id="i-tit" value="${esc(x.titulo)}"></div><div class="field"><label>Descrição</label><textarea id="i-desc" rows="3">${esc(x.descricao)}</textarea></div><div class="field"><label>Benefícios esperados</label><textarea id="i-ben" rows="2">${esc(x.beneficios)}</textarea></div><div class="field-row three"><div class="field"><label>Autor</label><select id="i-autor">${autorOpts}</select></div><div class="field"><label>Categoria</label><input id="i-cat" value="${esc(x.categoria)}" placeholder="Ex.: Evento"></div><div class="field"><label>Prioridade</label><select id="i-prio">${PRIOS.map(p=>`<option ${x.prioridade===p?"selected":""}>${p}</option>`).join("")}</select></div></div>${dir?`<div class="field"><label>Status</label><select id="i-status">${ISTATUS.map(s=>`<option ${x.status===s?"selected":""}>${s}</option>`).join("")}</select></div>`:""}</div><div class="modal-foot">${dir&&editing&&x.status!=="Convertida"?`<button class="btn sm" id="i-conv">Converter em projeto</button>`:""}<button class="btn ghost" data-x>Fechar</button><button class="btn" id="i-save">${editing?"Salvar":"Enviar"}</button></div></div>`;
+  $("#modalMount").appendChild(m);m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
+  const conv=$("#i-conv");if(conv)conv.onclick=()=>{m.remove();converterIdeia(x.id);};
+  $("#i-save").onclick=async()=>{x.titulo=$("#i-tit").value.trim()||"(sem título)";x.descricao=$("#i-desc").value.trim();x.beneficios=$("#i-ben").value.trim();x.autor=$("#i-autor").value;x.categoria=$("#i-cat").value.trim();x.prioridade=$("#i-prio").value;if(dir&&$("#i-status"))x.status=$("#i-status").value;const b=$("#i-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveIdeia(x);m.remove();render();toast(editing?"Salva":"Ideia registrada");}catch(e){b.disabled=false;b.textContent="Salvar";toast("Erro",true);}};
+};
+async function converterIdeia(id){const x=IDEIAS.find(y=>y.id===id);if(!x)return;if(!confirm(`Converter "${x.titulo}" em projeto?`))return;const proj={id:uid(),nome:x.titulo,objetivo:x.beneficios||"",descricao:x.descricao||"",diretoria:"",lider:"",equipe:x.autor?[x.autor]:[],prioridade:x.prioridade||"Média",dataInicio:todayISO(),prazo:"",status:"Planejamento",percentual:0,checklist:[],comentarios:[],arquivos:[]};try{await Store.saveProjeto(proj);x.status="Convertida";x.projetoId=proj.id;await Store.saveIdeia(x);if(x.autor)await Store.notificar(x.autor,"Sua ideia virou projeto!",x.titulo,proj.id);switchView("projetos");toast("Ideia convertida em projeto");}catch(e){toast("Erro ao converter",true);}}
+
+/* ---------- REUNIÕES ---------- */
+function renderReunioes(){const el=$("#v-reunioes");el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input id="qR" placeholder="Buscar reunião..."></div><button class="btn sm hide-membro" onclick="reuniaoModal(null)">+ Nova reunião</button></div><div id="rBody"></div>`;const q=$("#qR");q.oninput=()=>drawReunioes(q.value);drawReunioes("");}
+function drawReunioes(term){const t=(term||"").toLowerCase();const rows=REUNIOES.filter(x=>!t||(x.titulo+" "+(x.pauta||"")).toLowerCase().includes(t));$("#rBody").innerHTML=`<div class="grid-cards">${rows.map(reuniaoCard).join("")||`<div class="empty" style="grid-column:1/-1">Nenhuma reunião agendada.</div>`}</div>`;$("#rBody").querySelectorAll("[data-red]").forEach(b=>b.onclick=()=>reuniaoModal(b.dataset.red));}
+function reuniaoCard(x){const futura=x.data&&x.data>=todayISO();const presentes=(x.presenca||[]).filter(p=>p.presente).length;return `<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(x.titulo)}</h4><span class="chip" style="background:${futura?"var(--brand-tint)":"var(--panel-2)"};color:${futura?"var(--brand)":"var(--ink-soft)"}">${futura?"agendada":"realizada"}</span></div><div style="font-size:13px;color:var(--ink-soft)">${x.data?brDate(x.data):"sem data"}${x.hora?" · "+esc(x.hora):""}${x.local?" · "+esc(x.local):""}</div>${x.pauta?`<div style="font-size:13px;color:var(--ink-soft)">${esc(x.pauta).slice(0,110)}</div>`:""}<div style="font-size:12px;color:var(--ink-soft)">${(x.participantes||[]).length} convidado(s)${presentes?" · "+presentes+" presente(s)":""}${x.ata?" · tem ata":""}</div><div class="p2-actions">${x.link?`<a class="cbtn ml" href="${esc(x.link)}" target="_blank" rel="noopener">Entrar</a>`:""}<button class="btn ghost sm" data-red="${x.id}">Abrir</button></div></div>`;}
+window.reuniaoModal=id=>{const editing=!!id;const dir=ROLE==="direcao";const x=editing?JSON.parse(JSON.stringify(REUNIOES.find(y=>y.id===id))):{id:uid(),titulo:"",data:todayISO(),hora:"",local:"",link:"",participantes:[],pauta:"",presenca:[],pendencias:[],responsaveis:"",ata:"",proxima:""};const m=document.createElement("div");m.className="modal-bg";const ro=dir?"":"disabled";
+  m.innerHTML=`<div class="modal" style="max-width:640px"><div class="modal-head"><h2>${editing?esc(x.titulo||"Reunião"):"Nova reunião"}</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field"><label>Título</label><input id="r-tit" value="${esc(x.titulo)}" ${ro}></div>
+    <div class="field-row three"><div class="field"><label>Data</label><input type="date" id="r-data" value="${x.data||""}" ${ro}></div><div class="field"><label>Hora</label><input id="r-hora" value="${esc(x.hora)}" placeholder="19:00" ${ro}></div><div class="field"><label>Local</label><input id="r-local" value="${esc(x.local)}" placeholder="Sala / Online" ${ro}></div></div>
+    <div class="field"><label>Link da reunião</label><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="r-link" value="${esc(x.link)}" placeholder="Cole o link do Meet/Zoom" ${ro}>${dir?`<button class="btn ghost sm" type="button" onclick="window.open('https://meet.google.com/new','_blank')">Google Meet</button><button class="btn ghost sm" type="button" onclick="window.open('https://zoom.us/start/videomeeting','_blank')">Zoom</button>`:""}</div></div>
+    <div class="field"><label>Participantes</label><div id="r-part"></div>${dir?`<select id="r-addpart" class="add-mini" style="border-style:solid"><option value="">+ adicionar</option>${PESSOAS.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}</option>`).join("")}</select>`:""}</div>
+    <div class="field"><label>Pauta</label><textarea id="r-pauta" rows="3" ${ro}>${esc(x.pauta)}</textarea></div>
+    <div class="field"><label>Presença</label><div id="r-pres"></div></div>
+    <div class="field"><label>Pendências</label><div id="r-pend"></div>${dir?`<button class="add-mini" id="r-addpend" type="button">+ pendência</button>`:""}</div>
+    <div class="field"><label>Ata da reunião</label><textarea id="r-ata" rows="4" ${ro} placeholder="Registro do que foi decidido...">${esc(x.ata)}</textarea></div>
+    <div class="field"><label>Próxima reunião</label><input type="date" id="r-prox" value="${x.proxima||""}" ${ro}></div>
+  </div><div class="modal-foot">${dir&&editing?`<button class="btn danger sm" id="r-del">Excluir</button>`:""}<button class="btn ghost" data-x>Fechar</button>${dir?`<button class="btn" id="r-save">${editing?"Salvar":"Criar"}</button>`:""}</div></div>`;
+  $("#modalMount").appendChild(m);
+  const drawPart=()=>{$("#r-part").innerHTML=x.participantes.length?`<div class="p2-tags">${x.participantes.map((n,i)=>`<span class="tag dir">${esc(n)}${dir?` <button class="link" style="color:#fff" data-px="${i}">×</button>`:""}</span>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem participantes</span>`;$("#r-part").querySelectorAll("[data-px]").forEach(b=>b.onclick=()=>{const n=x.participantes[+b.dataset.px];x.participantes.splice(+b.dataset.px,1);x.presenca=x.presenca.filter(pp=>pp.nome!==n);drawPart();drawPres();});};
+  const drawPres=()=>{$("#r-pres").innerHTML=x.participantes.length?x.participantes.map(n=>{const pr=x.presenca.find(p=>p.nome===n);return `<div class="chkrow"><input type="checkbox" data-pr="${esc(n)}" ${pr&&pr.presente?"checked":""} ${dir?"":"disabled"}><span style="flex:1">${esc(n)}</span></div>`;}).join(""):`<span style="color:var(--ink-soft);font-size:13px">Adicione participantes para marcar presença</span>`;$("#r-pres").querySelectorAll("[data-pr]").forEach(cb=>cb.onchange=()=>{const n=cb.dataset.pr;let pr=x.presenca.find(p=>p.nome===n);if(!pr){pr={nome:n,presente:false};x.presenca.push(pr);}pr.presente=cb.checked;});};
+  const drawPend=()=>{$("#r-pend").innerHTML=x.pendencias.length?x.pendencias.map((p,i)=>`<div class="chkrow"><span style="flex:1">${esc(p.txt)}${p.resp?` <span style="color:var(--ink-soft)">(${esc(p.resp)})</span>`:""}</span>${dir?`<button class="link" style="color:var(--crit)" data-pdx="${i}">rem</button>`:""}</div>`).join(""):`<span style="color:var(--ink-soft);font-size:13px">Sem pendências</span>`;$("#r-pend").querySelectorAll("[data-pdx]").forEach(b=>b.onclick=()=>{x.pendencias.splice(+b.dataset.pdx,1);drawPend();});};
+  drawPart();drawPres();drawPend();
+  if(dir){const ap=$("#r-addpart");if(ap)ap.onchange=()=>{if(ap.value&&!x.participantes.includes(ap.value)){x.participantes.push(ap.value);drawPart();drawPres();}ap.value="";};const apd=$("#r-addpend");if(apd)apd.onclick=()=>{const t=prompt("Pendência:");if(t){const r=prompt("Responsável (opcional):")||"";x.pendencias.push({txt:t,resp:r});drawPend();}};}
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
+  const del=$("#r-del");if(del)del.onclick=async()=>{if(confirm("Excluir reunião?")){try{await Store.delReuniao(x.id);m.remove();render();toast("Excluída");}catch(e){toast("Erro",true);}}};
+  const save=$("#r-save");if(save)save.onclick=async()=>{x.titulo=$("#r-tit").value.trim()||"(sem título)";x.data=$("#r-data").value;x.hora=$("#r-hora").value.trim();x.local=$("#r-local").value.trim();x.link=$("#r-link").value.trim();x.pauta=$("#r-pauta").value.trim();x.ata=$("#r-ata").value.trim();x.proxima=$("#r-prox").value;save.disabled=true;save.innerHTML='<span class="spin"></span>';try{await Store.saveReuniao(x);if(!editing)for(const n of x.participantes)await Store.notificar(n,"Nova reunião",x.titulo+(x.data?" · "+brDate(x.data):""),x.id);m.remove();render();toast(editing?"Salva":"Reunião criada");}catch(e){save.disabled=false;save.textContent="Salvar";toast("Erro",true);}};
+};
 
 /* ---------- NOTIFICAÇÕES ---------- */
 function renderBell(){const el=$("#bellCount");if(!el)return;const n=EU?NOTIF.filter(x=>x.membro===EU&&!x.lida).length:0;el.textContent=n>99?"99+":String(n);el.classList.toggle("hidden",n===0);}
