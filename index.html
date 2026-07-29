@@ -112,6 +112,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-o
 .tbl tbody tr{transition:background .15s;cursor:pointer}.tbl tbody tr:hover{background:var(--panel-2)}
 /* ===== people/estrutura ===== */
 .grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px}
+.ftab{width:100%;border-collapse:collapse;font-size:13.5px}
+.ftab thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel-2)}
+.ftab tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ftab tbody tr:last-child td{border-bottom:none}
+.ftab tbody tr:hover{background:var(--panel-2)}
 .pcard2{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:15px;display:flex;flex-direction:column;gap:10px}
 .pcard2-top{display:flex;gap:12px;align-items:center;min-width:0}
 .avatar{width:48px;height:48px;border-radius:50%;background:var(--brand-tint);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;overflow:hidden;flex-shrink:0;font-family:"Montserrat",sans-serif}
@@ -213,6 +218,8 @@ body.membro .hide-membro{display:none !important}
     <button data-v="aprovacoes">✔️ Aprovações</button>
     <button data-v="onboarding" class="hide-membro">🎯 Onboarding</button>
     <button data-v="estrutura">🏛️ Estrutura</button>
+    <button data-v="executivo" class="hide-membro">📈 Executivo</button>
+    <button data-v="financeiro" class="hide-membro">💰 Financeiro</button>
     <button data-v="crm" class="hide-membro">📇 CRM</button>
   </div>
   <div class="wrap">
@@ -228,6 +235,8 @@ body.membro .hide-membro{display:none !important}
     <div class="view" id="v-aprovacoes"></div>
     <div class="view hide-membro" id="v-onboarding"></div>
     <div class="view" id="v-estrutura"></div>
+    <div class="view hide-membro" id="v-executivo"></div>
+    <div class="view hide-membro" id="v-financeiro"></div>
     <div class="view hide-membro" id="v-crm"></div>
   </div>
 </div>
@@ -254,7 +263,7 @@ const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
 let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0;
-let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[];
+let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[],FINANCEIRO=[];
 let VIEW="dashboard",PROJ_VIEW="kanban",EU="";
 try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
 
@@ -277,6 +286,8 @@ const muToRow=x=>({id:x.id,autor:x.autor||"",titulo:x.titulo||"",texto:x.texto||
 const rowToMu=r=>({id:r.id,autor:r.autor||"",titulo:r.titulo||"",texto:r.texto||"",fixado:!!r.fixado,comentarios:r.comentarios||[],createdAt:r.created_at});
 const evToRow=e=>({id:e.id,nome:e.nome,tipo:e.tipo||"Palestra",objetivo:e.objetivo||"",data:e.data||null,hora:e.hora||"",local:e.local||"",link:e.link||"",equipe:e.equipe||[],cronograma:e.cronograma||[],inscritos:e.inscritos||[],resultado:e.resultado||"",status:e.status||"Planejado"});
 const rowToEv=r=>({id:r.id,nome:r.nome,tipo:r.tipo||"Palestra",objetivo:r.objetivo||"",data:r.data||"",hora:r.hora||"",local:r.local||"",link:r.link||"",equipe:r.equipe||[],cronograma:r.cronograma||[],inscritos:r.inscritos||[],resultado:r.resultado||"",status:r.status||"Planejado"});
+const finToRow=f=>({id:f.id,tipo:f.tipo||"Despesa",categoria:f.categoria||"",descricao:f.descricao||"",valor:Number(f.valor)||0,data:f.data||null,diretoria:f.diretoria||"",status:f.status||"Previsto"});
+const rowToFin=r=>({id:r.id,tipo:r.tipo||"Despesa",categoria:r.categoria||"",descricao:r.descricao||"",valor:Number(r.valor)||0,data:r.data||"",diretoria:r.diretoria||"",status:r.status||"Previsto"});
 
 /* ---------- supabase ---------- */
 async function ensureSB(){if(sb)return sb;if(!window.supabase){await new Promise((res,rej)=>{const s=document.createElement("script");s.src=CDN;s.onload=res;s.onerror=()=>rej(new Error("Falha ao carregar Supabase"));document.head.appendChild(s);});}sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);return sb;}
@@ -286,7 +297,7 @@ const Store={
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
     await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
-    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
+    ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos","liga_financeiro"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
     sb.channel("rt-liga-notif").on("postgres_changes",{event:"*",schema:"public",table:"liga_notificacoes"},()=>{if(Date.now()-lastWrite>1500)this.reload().then(()=>renderBell()).catch(()=>{});}).subscribe();
   },
   async reload(){
@@ -302,6 +313,7 @@ const Store={
     IDEIAS=(id.data||[]).map(rowToI);REUNIOES=(re.data||[]).map(rowToR);
     const [ca,ap,mu,ev]=await Promise.all([sb.from("liga_candidatos").select("*").order("created_at",{ascending:false}),sb.from("liga_aprovacoes").select("*").order("created_at",{ascending:false}),sb.from("liga_mural").select("*").order("created_at",{ascending:false}),sb.from("liga_eventos").select("*").order("data",{ascending:false})]);
     CANDIDATOS=(ca.data||[]).map(rowToCand);APROVACOES=(ap.data||[]).map(rowToAp);MURAL=(mu.data||[]).map(rowToMu);EVENTOS=(ev.data||[]).map(rowToEv);
+    if(SESSION){const fi=await sb.from("liga_financeiro").select("*").order("data",{ascending:false});FINANCEIRO=(fi.data||[]).map(rowToFin);}else FINANCEIRO=[];
     const n=await sb.from("liga_notificacoes").select("*").order("criado_em",{ascending:false}).limit(200);
     NOTIF=(n.data||[]);
   },
@@ -317,6 +329,8 @@ const Store={
   async delMural(id){lastWrite=Date.now();MURAL=MURAL.filter(y=>y.id!==id);const {error}=await sb.from("liga_mural").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveEvento(x){lastWrite=Date.now();const i=EVENTOS.findIndex(y=>y.id===x.id);if(i>=0)EVENTOS[i]=x;else EVENTOS.unshift(x);const {error}=await sb.from("liga_eventos").upsert(evToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
   async delEvento(id){lastWrite=Date.now();EVENTOS=EVENTOS.filter(y=>y.id!==id);const {error}=await sb.from("liga_eventos").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
+  async saveFin(x){lastWrite=Date.now();const i=FINANCEIRO.findIndex(y=>y.id===x.id);if(i>=0)FINANCEIRO[i]=x;else FINANCEIRO.unshift(x);const {error}=await sb.from("liga_financeiro").upsert(finToRow(x));if(error){await this.reload().catch(()=>{});throw error;}},
+  async delFin(id){lastWrite=Date.now();FINANCEIRO=FINANCEIRO.filter(y=>y.id!==id);const {error}=await sb.from("liga_financeiro").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async savePessoa(p){lastWrite=Date.now();const i=PESSOAS.findIndex(x=>x.id===p.id);if(i>=0)PESSOAS[i]=p;else PESSOAS.push(p);const {error}=await sb.from("liga_pessoas").upsert(pToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
   async delPessoa(id){lastWrite=Date.now();PESSOAS=PESSOAS.filter(x=>x.id!==id);const {error}=await sb.from("liga_pessoas").delete().eq("id",id);if(error){await this.reload().catch(()=>{});throw error;}},
   async saveProjeto(p){lastWrite=Date.now();const i=PROJETOS.findIndex(x=>x.id===p.id);if(i>=0)PROJETOS[i]=p;else PROJETOS.unshift(p);const {error}=await sb.from("liga_projetos").upsert(prToRow(p));if(error){await this.reload().catch(()=>{});throw error;}},
@@ -349,7 +363,7 @@ function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.
 $("#btnNovoProj").onclick=()=>projModal(null);
 $("#bellBtn").onclick=()=>notifModal();
 
-function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();renderGateTeam();}
+function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();renderGateTeam();}
 
 /* ---------- DASHBOARD ---------- */
 function renderDash(){
@@ -734,6 +748,148 @@ window.muralModal=id=>{const editing=!!id;const x=editing?Object.assign({},MURAL
   $("#modalMount").appendChild(m);m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
   $("#mu-save").onclick=async()=>{x.titulo=$("#mu-tit").value.trim()||"(sem título)";x.texto=$("#mu-txt").value.trim();x.fixado=$("#mu-fix").checked;const b=$("#mu-save");b.disabled=true;b.innerHTML='<span class="spin"></span>';try{await Store.saveMural(x);m.remove();render();toast(editing?"Salvo":"Aviso publicado");}catch(e){b.disabled=false;b.textContent="Salvar";toast("Erro",true);}};
 };
+
+/* ---------- FINANCEIRO / EXECUTIVO ---------- */
+const brMoney=v=>"R$ "+(Number(v)||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const FCATS_REC=["Patrocínio","Mensalidade","Evento","Doação","Parceria","Outros"];
+const FCATS_DES=["Evento","Material","Marketing","Ferramentas/Software","Deslocamento","Taxas","Outros"];
+async function ensureJsPDF(){if(!window.jspdf){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";s.onload=res;s.onerror=()=>rej(new Error("no lib"));document.head.appendChild(s);});}return window.jspdf.jsPDF;}
+
+function finTotais(){
+  let recR=0,recP=0,desR=0,desP=0;
+  FINANCEIRO.forEach(f=>{const v=Number(f.valor)||0;if(f.tipo==="Receita"){if(f.status==="Realizado")recR+=v;else recP+=v;}else{if(f.status==="Realizado")desR+=v;else desP+=v;}});
+  return {recR,recP,desR,desP,saldoR:recR-desR,saldoP:(recR+recP)-(desR+desP)};
+}
+function renderFinanceiro(){
+  const el=$("#v-financeiro");
+  const t=finTotais();
+  const kpi=(l,v,s,c="")=>`<div class="kpi ${c}"><div class="lab">${l}</div><div class="val">${v}</div>${s?`<div class="sub">${s}</div>`:""}</div>`;
+  el.innerHTML=`
+    <div class="toolbar"><h2 style="font-size:19px;margin:0">💰 Controle financeiro</h2><div style="flex:1"></div><button class="btn ghost sm" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button><button class="btn sm" onclick="finModal(null)">+ Lançamento</button></div>
+    <div class="kpis">
+      ${kpi("Receitas realizadas",brMoney(t.recR),(t.recP?brMoney(t.recP)+" previstas":"—"),"accent")}
+      ${kpi("Despesas realizadas",brMoney(t.desR),(t.desP?brMoney(t.desP)+" previstas":"—"))}
+      ${kpi("Saldo realizado",brMoney(t.saldoR),"caixa hoje",t.saldoR<0?"crit":"")}
+      ${kpi("Saldo projetado",brMoney(t.saldoP),"incluindo previstos",t.saldoP<0?"warn":"")}
+    </div>
+    <div class="sec-title">Lançamentos</div>
+    <div class="panel" style="padding:0;overflow-x:auto"><table class="ftab"><thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Diretoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody id="finRows"></tbody></table></div>`;
+  const rows=[...FINANCEIRO].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  $("#finRows").innerHTML=rows.length?rows.map(f=>`<tr>
+      <td>${f.data?brDate(f.data):"—"}</td>
+      <td><span class="chip" style="background:${f.tipo==="Receita"?"var(--ok-tint)":"var(--crit-tint)"};color:${f.tipo==="Receita"?"var(--ok)":"var(--crit)"}">${f.tipo}</span></td>
+      <td>${esc(f.categoria||"—")}</td><td>${esc(f.descricao||"—")}</td><td>${esc(f.diretoria||"—")}</td>
+      <td><span class="chip" style="background:${f.status==="Realizado"?"var(--brand-tint)":"var(--warn-tint)"};color:${f.status==="Realizado"?"var(--brand)":"var(--warn)"}">${f.status}</span></td>
+      <td style="text-align:right;font-weight:700;color:${f.tipo==="Receita"?"var(--ok)":"var(--crit)"}">${f.tipo==="Receita"?"+":"−"} ${brMoney(f.valor)}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="link" data-fed="${f.id}">editar</button> <button class="link" style="color:var(--crit)" data-fdel="${f.id}">×</button></td></tr>`).join(""):`<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:22px">Nenhum lançamento. Clique em "+ Lançamento".</td></tr>`;
+  $("#finRows").querySelectorAll("[data-fed]").forEach(b=>b.onclick=()=>finModal(b.dataset.fed));
+  $("#finRows").querySelectorAll("[data-fdel]").forEach(b=>b.onclick=async()=>{if(confirm("Excluir lançamento?")){try{await Store.delFin(b.dataset.fdel);render();toast("Excluído");}catch(x){toast("Erro",true);}}});
+}
+window.finModal=id=>{
+  const editing=!!id;const f=editing?Object.assign({},FINANCEIRO.find(x=>x.id===id)):{id:uid(),tipo:"Despesa",categoria:"",descricao:"",valor:0,data:todayISO(),diretoria:"",status:"Realizado"};
+  const m=document.createElement("div");m.className="modal-bg";
+  const catsFor=tp=>(tp==="Receita"?FCATS_REC:FCATS_DES);
+  const dirOpts=`<option value="">— Geral —</option>`+DIRETORIAS.map(d=>`<option value="${esc(d.nome)}" ${f.diretoria===d.nome?"selected":""}>${esc(d.nome)}</option>`).join("");
+  m.innerHTML=`<div class="modal" style="max-width:540px"><div class="modal-head"><h2>${editing?"Editar lançamento":"Novo lançamento"}</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field-row"><div class="field"><label>Tipo</label><select id="f-tipo"><option ${f.tipo==="Receita"?"selected":""}>Receita</option><option ${f.tipo==="Despesa"?"selected":""}>Despesa</option></select></div><div class="field"><label>Status</label><select id="f-status"><option ${f.status==="Realizado"?"selected":""}>Realizado</option><option ${f.status==="Previsto"?"selected":""}>Previsto</option></select></div></div>
+    <div class="field-row"><div class="field"><label>Categoria</label><select id="f-cat"></select></div><div class="field"><label>Valor (R$)</label><input id="f-valor" type="number" step="0.01" value="${f.valor||""}"></div></div>
+    <div class="field"><label>Descrição</label><input id="f-desc" value="${esc(f.descricao)}" placeholder="Ex.: Patrocínio Evento X"></div>
+    <div class="field-row"><div class="field"><label>Data</label><input id="f-data" type="date" value="${f.data||""}"></div><div class="field"><label>Diretoria (opcional)</label><select id="f-dir">${dirOpts}</select></div></div>
+  </div><div class="modal-foot">${editing?`<button class="btn danger sm" id="f-del">Excluir</button>`:""}<button class="btn ghost" data-x>Cancelar</button><button class="btn" id="f-save">${editing?"Salvar":"Criar"}</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  const fillCats=()=>{const tp=$("#f-tipo").value;$("#f-cat").innerHTML=catsFor(tp).map(c=>`<option ${f.categoria===c?"selected":""}>${c}</option>`).join("");};
+  fillCats();$("#f-tipo").onchange=fillCats;
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=ev=>{if(ev.target===m)m.remove();};
+  const del=$("#f-del");if(del)del.onclick=async()=>{if(confirm("Excluir?")){try{await Store.delFin(f.id);m.remove();render();toast("Excluído");}catch(x){toast("Erro",true);}}};
+  $("#f-save").onclick=async()=>{f.tipo=$("#f-tipo").value;f.status=$("#f-status").value;f.categoria=$("#f-cat").value;f.valor=parseFloat($("#f-valor").value)||0;f.descricao=$("#f-desc").value.trim();f.data=$("#f-data").value;f.diretoria=$("#f-dir").value;const btn=$("#f-save");btn.disabled=true;btn.innerHTML='<span class="spin"></span>';try{await Store.saveFin(f);m.remove();render();toast(editing?"Salvo":"Lançamento criado");}catch(x){btn.disabled=false;btn.textContent="Salvar";toast("Erro",true);}};
+};
+
+function dirStats(){
+  const nomes=DIRETORIAS.map(d=>d.nome);
+  return nomes.map(nome=>{
+    const projs=PROJETOS.filter(p=>p.diretoria===nome);
+    const ativos=projs.filter(projAtivo).length;
+    const concl=projs.filter(p=>p.status==="Concluído").length;
+    const tars=TAREFAS.filter(t=>{const pj=PROJETOS.find(p=>p.id===t.projeto_id||p.id===t.projetoId);return (pj&&pj.diretoria===nome)||t.diretoria===nome;});
+    const tPend=tars.filter(t=>t.status!=="concluida").length;
+    const pessoas=PESSOAS.filter(p=>p.diretoria===nome||p.cargo==="Conselheiro"&&false).length;
+    const taxa=projs.length?Math.round(concl/projs.length*100):0;
+    const rec=FINANCEIRO.filter(f=>f.diretoria===nome&&f.tipo==="Receita"&&f.status==="Realizado").reduce((s,f)=>s+(+f.valor||0),0);
+    const des=FINANCEIRO.filter(f=>f.diretoria===nome&&f.tipo==="Despesa"&&f.status==="Realizado").reduce((s,f)=>s+(+f.valor||0),0);
+    return {nome,total:projs.length,ativos,concl,tPend,pessoas,taxa,rec,des};
+  });
+}
+function renderExecutivo(){
+  const el=$("#v-executivo");
+  const totalProj=PROJETOS.length,ativos=PROJETOS.filter(projAtivo).length,concl=PROJETOS.filter(p=>p.status==="Concluído").length;
+  const taxaGeral=totalProj?Math.round(concl/totalProj*100):0;
+  const tPend=TAREFAS.filter(t=>t.status!=="concluida").length,tAtr=TAREFAS.filter(tarefaAtrasada).length;
+  const t=finTotais();
+  const kpi=(l,v,s,c="")=>`<div class="kpi ${c}"><div class="lab">${l}</div><div class="val">${v}</div>${s?`<div class="sub">${s}</div>`:""}</div>`;
+  const stats=dirStats().sort((a,b)=>b.ativos-a.ativos);
+  el.innerHTML=`
+    <div class="toolbar"><h2 style="font-size:19px;margin:0">📈 Painel executivo</h2><div style="flex:1"></div><button class="btn ghost sm" onclick="gerarRelatorioPDF()">📄 Gerar relatório PDF</button></div>
+    <div class="kpis">
+      ${kpi("Projetos ativos",ativos,totalProj+" no total","accent")}
+      ${kpi("Taxa de conclusão",taxaGeral+"%",concl+" concluídos")}
+      ${kpi("Tarefas pendentes",tPend,tAtr+" atrasadas",tAtr?"warn":"")}
+      ${kpi("Pessoas",PESSOAS.length,DIRETORIAS.length+" diretorias")}
+      ${kpi("Saldo realizado",brMoney(t.saldoR),"receitas − despesas",t.saldoR<0?"crit":"")}
+      ${kpi("Eventos",EVENTOS.length,EVENTOS.filter(e=>e.status==="Realizado").length+" realizados")}
+    </div>
+    <div class="sec-title">Desempenho por diretoria</div>
+    <div class="panel" style="padding:0;overflow-x:auto"><table class="ftab"><thead><tr><th>Diretoria</th><th>Pessoas</th><th>Projetos</th><th>Ativos</th><th>Concluídos</th><th>Tarefas pend.</th><th>Conclusão</th><th style="text-align:right">Saldo</th></tr></thead><tbody>
+      ${stats.length?stats.map(s=>`<tr><td style="font-weight:650">${esc(s.nome)}</td><td>${s.pessoas}</td><td>${s.total}</td><td>${s.ativos}</td><td>${s.concl}</td><td>${s.tPend}</td>
+        <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:60px;height:7px;background:var(--line);border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:${s.taxa}%;background:linear-gradient(90deg,var(--brand-soft),var(--brand))"></i></div><b style="font-size:12px">${s.taxa}%</b></div></td>
+        <td style="text-align:right;font-weight:700;color:${(s.rec-s.des)<0?"var(--crit)":"var(--ok)"}">${brMoney(s.rec-s.des)}</td></tr>`).join(""):`<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:20px">Cadastre diretorias e projetos.</td></tr>`}
+    </tbody></table></div>`;
+}
+
+async function gerarRelatorioPDF(){
+  let jsPDF;try{jsPDF=await ensureJsPDF();}catch(e){toast("Falha ao carregar gerador",true);return;}
+  const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  const W=210;let y=0;
+  const hoje=new Date().toLocaleDateString("pt-BR");
+  // capa header
+  doc.setFillColor(15,42,74);doc.rect(0,0,W,46,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(22);doc.text("LigaHub Finance",16,24);
+  doc.setFont("helvetica","normal");doc.setFontSize(12);doc.text("Relatório executivo de gestão",16,33);
+  doc.setFontSize(9);doc.text("Gerado em "+hoje,16,40);
+  y=58;
+  const sec=(txt)=>{doc.setTextColor(37,99,235);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(txt,16,y);doc.setDrawColor(37,99,235);doc.setLineWidth(.4);doc.line(16,y+2,W-16,y+2);y+=9;doc.setTextColor(40,48,60);doc.setFont("helvetica","normal");doc.setFontSize(11);};
+  const line=(l,v)=>{doc.setFont("helvetica","normal");doc.setTextColor(90,102,117);doc.text(l,16,y);doc.setFont("helvetica","bold");doc.setTextColor(20,26,36);doc.text(String(v),W-16,y,{align:"right"});y+=7;};
+  // indicadores gerais
+  const totalProj=PROJETOS.length,ativos=PROJETOS.filter(projAtivo).length,concl=PROJETOS.filter(p=>p.status==="Concluído").length;
+  const taxaGeral=totalProj?Math.round(concl/totalProj*100):0;const tPend=TAREFAS.filter(t=>t.status!=="concluida").length,tAtr=TAREFAS.filter(tarefaAtrasada).length;
+  sec("1. Indicadores gerais");
+  line("Projetos ativos",ativos+" de "+totalProj);
+  line("Projetos concluídos",concl+" ("+taxaGeral+"%)");
+  line("Tarefas pendentes",tPend+" ("+tAtr+" atrasadas)");
+  line("Pessoas cadastradas",PESSOAS.length);
+  line("Diretorias",DIRETORIAS.length);
+  line("Eventos",EVENTOS.length+" ("+EVENTOS.filter(e=>e.status==="Realizado").length+" realizados)");
+  y+=4;
+  // financeiro
+  const t=finTotais();
+  sec("2. Financeiro");
+  line("Receitas realizadas",brMoney(t.recR));
+  line("Despesas realizadas",brMoney(t.desR));
+  line("Saldo realizado (caixa)",brMoney(t.saldoR));
+  line("Saldo projetado",brMoney(t.saldoP));
+  y+=4;
+  // por diretoria
+  sec("3. Desempenho por diretoria");
+  const stats=dirStats().sort((a,b)=>b.ativos-a.ativos);
+  doc.setFontSize(9);doc.setTextColor(120,130,145);
+  doc.text("Diretoria",16,y);doc.text("Proj.",96,y);doc.text("Ativos",116,y);doc.text("Concl.",138,y);doc.text("Conc.%",160,y);doc.text("Saldo",W-16,y,{align:"right"});y+=5;
+  doc.setDrawColor(220,226,235);doc.line(16,y-2,W-16,y-2);
+  doc.setFontSize(10);
+  stats.forEach(s=>{if(y>275){doc.addPage();y=20;}doc.setTextColor(20,26,36);doc.setFont("helvetica","bold");doc.text(String(s.nome).slice(0,34),16,y);doc.setFont("helvetica","normal");doc.setTextColor(60,70,85);doc.text(String(s.total),96,y);doc.text(String(s.ativos),116,y);doc.text(String(s.concl),138,y);doc.text(s.taxa+"%",160,y);doc.setTextColor((s.rec-s.des)<0?214:18,(s.rec-s.des)<0?47:161,(s.rec-s.des)<0?47:80);doc.text(brMoney(s.rec-s.des),W-16,y,{align:"right"});y+=6.5;});
+  // rodapé
+  const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(150,158,170);doc.text("LigaHub Finance · Relatório interno · "+hoje,16,290);doc.text(i+"/"+pages,W-16,290,{align:"right"});}
+  doc.save("ligahub-relatorio-"+todayISO()+".pdf");
+  toast("Relatório gerado");
+}
 
 /* ---------- EVENTOS ---------- */
 const ETIPOS=["Palestra","Workshop","Curso","Competição","Mesa-redonda","Visita técnica"];
