@@ -120,6 +120,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-o
 .rank-pts{text-align:right;min-width:56px}.rank-pts b{font-size:22px;font-weight:800;color:var(--brand);display:block;line-height:1}.rank-pts span{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
 .badge-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;background:var(--warn-tint);color:var(--warn);padding:2px 8px;border-radius:999px}
 .badge-chip .bx{cursor:pointer;color:var(--crit);font-weight:800;margin-left:2px}
+.badge-chip.auto{background:var(--brand-tint);color:var(--brand)}
+.etq-wrap{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.etq{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;background:var(--panel-2);border:1px solid var(--line-strong);color:var(--ink-soft);padding:1px 7px;border-radius:999px;white-space:nowrap}
+.etq b{cursor:pointer;color:var(--crit);font-weight:800}
 .star-pick .star{font-size:24px;color:#F5A623;cursor:pointer;user-select:none;padding:0 1px}
 .ic-pick{cursor:pointer}
 .pf-overlay{position:fixed;inset:0;z-index:1000;background:var(--bg);overflow-y:auto}
@@ -230,7 +234,6 @@ body.membro .hide-membro{display:none !important}
     <span class="pill" id="rolePill">—</span>
     <div class="spacer"></div>
     <button class="btn ghost sm bell" id="bellBtn" title="Minhas notificações">🔔<span class="bell-badge hidden" id="bellCount">0</span></button>
-    <button class="btn sm hide-membro" id="btnNovoProj">+ Projeto</button>
     <button class="btn ghost sm" id="logoutBtn">Sair</button>
   </div>
   <div class="nav" id="nav">
@@ -292,7 +295,7 @@ const waLink=n=>{if(!n)return"";let d=String(n).replace(/\D/g,"");if(!d)return""
 function toast(m,e){const t=$("#toast");t.textContent=m;t.className="toast show"+(e?" err":"");setTimeout(()=>t.className="toast",2600);}
 
 const PRIOS=["Baixa","Média","Alta","Crítica"];
-const STATUS=["Ideia","Em análise","Planejamento","Em execução","Revisão","Concluído","Cancelado"];
+const STATUS=["Em análise","Planejamento","Em execução","Revisão","Concluído","Cancelado"];
 const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5bd4","Em execução":"#0E9F8E","Revisão":"#C67C00","Concluído":"#12A150","Cancelado":"#D62F2F"};
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
@@ -304,10 +307,10 @@ try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
 /* ---------- mapping ---------- */
 const pToRow=p=>({id:p.id,nome:p.nome,apelido:p.apelido||"",foto:p.foto||"",email:p.email||"",telefone:p.telefone||"",curso:p.curso||"",periodo:p.periodo||"",data_ingresso:p.dataIngresso||null,diretoria:p.diretoria||"",cargo:p.cargo||"",status:p.status||"ativo",competencias:p.competencias||"",linkedin:p.linkedin||"",aprovado:p.aprovado!==false,ordem:p.ordem||0});
 const rowToP=r=>({id:r.id,nome:r.nome,apelido:r.apelido||"",foto:r.foto||"",email:r.email||"",telefone:r.telefone||"",curso:r.curso||"",periodo:r.periodo||"",dataIngresso:r.data_ingresso||"",diretoria:r.diretoria||"",cargo:r.cargo||"",status:r.status||"ativo",competencias:r.competencias||"",linkedin:r.linkedin||"",aprovado:r.aprovado!==false,ordem:r.ordem||0});
-const prToRow=p=>({id:p.id,nome:p.nome,objetivo:p.objetivo||"",descricao:p.descricao||"",diretoria:p.diretoria||"",lider:p.lider||"",equipe:p.equipe||[],prioridade:p.prioridade||"Média",data_inicio:p.dataInicio||null,prazo:p.prazo||null,status:p.status||"Ideia",percentual:+p.percentual||0,checklist:p.checklist||[],comentarios:p.comentarios||[],arquivos:p.arquivos||[],ordem:p.ordem||0});
-const rowToPr=r=>({id:r.id,nome:r.nome,objetivo:r.objetivo||"",descricao:r.descricao||"",diretoria:r.diretoria||"",lider:r.lider||"",equipe:r.equipe||[],prioridade:r.prioridade||"Média",dataInicio:r.data_inicio||"",prazo:r.prazo||"",status:r.status||"Ideia",percentual:+r.percentual||0,checklist:r.checklist||[],comentarios:r.comentarios||[],arquivos:r.arquivos||[],ordem:r.ordem||0});
-const tToRow=t=>({id:t.id,titulo:t.titulo,descricao:t.descricao||"",projeto_id:t.projetoId||null,projeto:t.projeto||"",responsavel:t.responsavel||"",prioridade:t.prioridade||"Média",prazo:t.prazo||null,status:t.status||"pendente",checklist:t.checklist||[],comentarios:t.comentarios||[]});
-const rowToT=r=>({id:r.id,titulo:r.titulo,descricao:r.descricao||"",projetoId:r.projeto_id||"",projeto:r.projeto||"",responsavel:r.responsavel||"",prioridade:r.prioridade||"Média",prazo:r.prazo||"",status:r.status||"pendente",checklist:r.checklist||[],comentarios:r.comentarios||[]});
+const prToRow=p=>({id:p.id,nome:p.nome,objetivo:p.objetivo||"",descricao:p.descricao||"",diretoria:p.diretoria||"",lider:p.lider||"",equipe:p.equipe||[],prioridade:p.prioridade||"Média",data_inicio:p.dataInicio||null,prazo:p.prazo||null,status:p.status||"Planejamento",percentual:+p.percentual||0,checklist:p.checklist||[],comentarios:p.comentarios||[],arquivos:p.arquivos||[],tags:p.tags||[],ordem:p.ordem||0});
+const rowToPr=r=>({id:r.id,nome:r.nome,objetivo:r.objetivo||"",descricao:r.descricao||"",diretoria:r.diretoria||"",lider:r.lider||"",equipe:r.equipe||[],prioridade:r.prioridade||"Média",dataInicio:r.data_inicio||"",prazo:r.prazo||"",status:(r.status==="Ideia"?"Planejamento":r.status)||"Planejamento",percentual:+r.percentual||0,checklist:r.checklist||[],comentarios:r.comentarios||[],arquivos:r.arquivos||[],tags:r.tags||[],ordem:r.ordem||0});
+const tToRow=t=>({id:t.id,titulo:t.titulo,descricao:t.descricao||"",projeto_id:t.projetoId||null,projeto:t.projeto||"",responsavel:t.responsavel||"",prioridade:t.prioridade||"Média",prazo:t.prazo||null,status:t.status||"pendente",checklist:t.checklist||[],comentarios:t.comentarios||[],tags:t.tags||[]});
+const rowToT=r=>({id:r.id,titulo:r.titulo,descricao:r.descricao||"",projetoId:r.projeto_id||"",projeto:r.projeto||"",responsavel:r.responsavel||"",prioridade:r.prioridade||"Média",prazo:r.prazo||"",status:r.status||"pendente",checklist:r.checklist||[],comentarios:r.comentarios||[],tags:r.tags||[]});
 const iToRow=x=>({id:x.id,titulo:x.titulo,descricao:x.descricao||"",autor:x.autor||"",categoria:x.categoria||"",beneficios:x.beneficios||"",prioridade:x.prioridade||"Média",status:x.status||"Nova",projeto_id:x.projetoId||null});
 const rowToI=r=>({id:r.id,titulo:r.titulo,descricao:r.descricao||"",autor:r.autor||"",categoria:r.categoria||"",beneficios:r.beneficios||"",prioridade:r.prioridade||"Média",status:r.status||"Nova",projetoId:r.projeto_id||"",createdAt:r.created_at});
 const rToRow=x=>({id:x.id,titulo:x.titulo,data:x.data||null,hora:x.hora||"",local:x.local||"",link:x.link||"",participantes:x.participantes||[],pauta:x.pauta||"",presenca:x.presenca||[],pendencias:x.pendencias||[],responsaveis:x.responsaveis||"",ata:x.ata||"",proxima:x.proxima||null});
@@ -405,7 +408,7 @@ $("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;
 /* ---------- nav / views ---------- */
 $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>switchView(b.dataset.v));
 function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.v===v));document.querySelectorAll(".view").forEach(el=>el.classList.toggle("active",el.id==="v-"+v));render();window.scrollTo({top:0,behavior:"smooth"});}
-$("#btnNovoProj").onclick=()=>projModal(null);
+{const bnp=$("#btnNovoProj");if(bnp)bnp.onclick=()=>projModal(null);}
 $("#bellBtn").onclick=()=>notifModal();
 
 function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();else if(VIEW==="ranking")renderRanking();else if(VIEW==="avaliacao")renderAvaliacao();else if(VIEW==="portfolio")renderPortfolio();renderGateTeam();}
@@ -471,6 +474,7 @@ function projCard(p){
   return `<div class="pcard" draggable="${ROLE==="direcao"}" data-id="${p.id}" onclick="projDetalhe('${p.id}')">
     <h4>${esc(p.nome)}</h4>
     <div class="pcard-meta"><span class="prio prio-${p.prioridade}">${p.prioridade}</span>${p.diretoria?`<span>${esc(p.diretoria)}</span>`:""}</div>
+    ${(p.tags&&p.tags.length)?`<div class="etq-wrap">${p.tags.slice(0,4).map(tg=>`<span class="etq">${esc(tg)}</span>`).join("")}</div>`:""}
     <div class="pcard-bar"><i style="width:${p.percentual}%"></i></div>
     <div class="pcard-foot"><span style="font-size:11.5px;color:${late?"var(--crit)":"var(--ink-soft)"};font-weight:600">${p.prazo?(late?`atrasado`:brDate(p.prazo)):"sem prazo"}</span><div class="pfaces">${faces}</div></div>
   </div>`;
@@ -491,7 +495,8 @@ function wireKanban(){
 window.projDetalhe=id=>{const p=PROJETOS.find(x=>x.id===id);if(p)projModal(p.id,true);};
 function projModal(id,view){
   const editing=!!id;const dir=ROLE==="direcao";
-  const p=editing?JSON.parse(JSON.stringify(PROJETOS.find(x=>x.id===id))):{id:uid(),nome:"",objetivo:"",descricao:"",diretoria:"",lider:"",equipe:[],prioridade:"Média",dataInicio:todayISO(),prazo:"",status:"Ideia",percentual:0,checklist:[],comentarios:[],arquivos:[]};
+  const p=editing?JSON.parse(JSON.stringify(PROJETOS.find(x=>x.id===id))):{id:uid(),nome:"",objetivo:"",descricao:"",diretoria:"",lider:"",equipe:[],prioridade:"Média",dataInicio:todayISO(),prazo:"",status:"Planejamento",percentual:0,checklist:[],comentarios:[],arquivos:[],tags:[]};
+  p.tags=p.tags||[];
   const m=document.createElement("div");m.className="modal-bg";
   const nomesPessoas=PESSOAS.map(x=>x.nome);
   const dirOpts=`<option value="">—</option>`+DIRETORIAS.map(d=>`<option value="${esc(d.nome)}" ${p.diretoria===d.nome?"selected":""}>${esc(d.nome)}</option>`).join("");
@@ -502,6 +507,7 @@ function projModal(id,view){
       <div class="field"><label>Nome do projeto</label><input id="p-nome" value="${esc(p.nome)}" ${ro}></div>
       <div class="field"><label>Objetivo</label><input id="p-obj" value="${esc(p.objetivo)}" ${ro}></div>
       <div class="field"><label>Descrição</label><textarea id="p-desc" rows="3" ${ro}>${esc(p.descricao)}</textarea></div>
+      <div class="field"><label>Etiquetas</label><div id="p-tags"></div>${dir?`<div style="display:flex;gap:8px;margin-top:6px"><input id="p-tagin" placeholder="Nova etiqueta e Enter"><button class="btn ghost sm" id="p-tagadd" type="button">+ add</button></div>`:""}</div>
       <div class="field-row"><div class="field"><label>Diretoria responsável</label><select id="p-dir" ${ro}>${dirOpts}</select></div>
         <div class="field"><label>Líder</label><select id="p-lider" ${ro}>${liderOpts}</select></div></div>
       <div class="field-row three"><div class="field"><label>Prioridade</label><select id="p-prio" ${ro}>${PRIOS.map(x=>`<option ${p.prioridade===x?"selected":""}>${x}</option>`).join("")}</select></div>
@@ -519,10 +525,13 @@ function projModal(id,view){
   const drawEq=()=>{$("#p-equipe").innerHTML=p.equipe.length?`<div class="p2-tags">${p.equipe.map((n,i)=>`<span class="tag dir">${esc(n)}${dir?` <button class="link" data-eqx="${i}" style="color:#fff">×</button>`:""}</span>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem equipe</span>`;$("#p-equipe").querySelectorAll("[data-eqx]").forEach(b=>b.onclick=()=>{p.equipe.splice(+b.dataset.eqx,1);drawEq();});};
   const drawChk=()=>{$("#p-chk").innerHTML=p.checklist.map((c,i)=>`<div class="chkrow"><input type="checkbox" ${c.ok?"checked":""} data-ck="${i}" ${dir?"":"disabled"}><span style="flex:1;${c.ok?"text-decoration:line-through;color:var(--ink-soft)":""}">${esc(c.txt)}</span>${dir?`<button class="link" style="color:var(--crit)" data-ckx="${i}">rem</button>`:""}</div>`).join("")||`<span style="color:var(--ink-soft);font-size:13px">Sem itens</span>`;$("#p-chk").querySelectorAll("[data-ck]").forEach(cb=>cb.onchange=()=>{p.checklist[+cb.dataset.ck].ok=cb.checked;});$("#p-chk").querySelectorAll("[data-ckx]").forEach(b=>b.onclick=()=>{p.checklist.splice(+b.dataset.ckx,1);drawChk();});};
   const drawCom=()=>{$("#p-coments").innerHTML=(p.comentarios||[]).map(c=>`<div style="background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 11px"><div style="font-size:12px;color:var(--brand);font-weight:700">${esc(c.autor||"—")} <span style="color:var(--ink-soft);font-weight:400">· ${esc(c.em||"")}</span></div><div style="font-size:13.5px;margin-top:2px">${esc(c.txt)}</div></div>`).join("")||`<span style="color:var(--ink-soft);font-size:13px">Sem comentários</span>`;};
-  drawEq();drawChk();drawCom();
+  const drawTags=()=>{$("#p-tags").innerHTML=p.tags.length?`<div class="etq-wrap">${p.tags.map((tg,i)=>`<span class="etq">${esc(tg)}${dir?` <b data-tgx="${i}">×</b>`:""}</span>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem etiquetas</span>`;$("#p-tags").querySelectorAll("[data-tgx]").forEach(b=>b.onclick=()=>{p.tags.splice(+b.dataset.tgx,1);drawTags();});};
+  drawEq();drawChk();drawCom();drawTags();
   if(dir){
     const ae=$("#p-addeq");if(ae)ae.onchange=()=>{if(ae.value&&!p.equipe.includes(ae.value)){p.equipe.push(ae.value);drawEq();}ae.value="";};
     const ac=$("#p-addchk");if(ac)ac.onclick=()=>{const t=prompt("Item do checklist:");if(t){p.checklist.push({txt:t,ok:false});drawChk();}};
+    const addTag=()=>{const inp=$("#p-tagin");const v=(inp.value||"").trim();if(v&&!p.tags.includes(v)){p.tags.push(v);drawTags();}inp.value="";inp.focus();};
+    const ta=$("#p-tagadd");if(ta)ta.onclick=addTag;const ti=$("#p-tagin");if(ti)ti.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addTag();}});
   }
   $("#p-csend").onclick=async()=>{const a=$("#p-cauth").value,t=$("#p-ctxt").value.trim();if(!t)return;const d=new Date();p.comentarios=p.comentarios||[];p.comentarios.push({autor:a||"—",txt:t,em:d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})});$("#p-ctxt").value="";drawCom();if(dir||editing){try{await Store.saveProjeto(p);}catch(e){}}};
   m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
@@ -551,11 +560,12 @@ function renderTarefas(){
 function drawTarefas(term){
   const t=(term||"").toLowerCase();
   const rows=TAREFAS.filter(x=>!t||(x.titulo+" "+(x.projeto||"")+" "+(x.responsavel||"")).toLowerCase().includes(t));
-  $("#tBody").innerHTML=`<div class="panel" style="overflow-x:auto;padding:0"><table class="tbl"><thead><tr><th></th><th>Tarefa</th><th>Projeto</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Status</th></tr></thead><tbody>${rows.map(x=>{const late=tarefaAtrasada(x);return `<tr onclick="tarefaModal('${x.id}')"><td>${x.status==="concluida"?"✅":(late?"🔴":"⬜")}</td><td><b>${esc(x.titulo)}</b></td><td>${esc(x.projeto||"—")}</td><td>${x.responsavel?faceHtml(x.responsavel,"pface")+" "+esc(x.responsavel):"—"}</td><td><span class="prio prio-${x.prioridade}">${x.prioridade}</span></td><td style="color:${late?"var(--crit)":""}">${x.prazo?brDate(x.prazo):"—"}</td><td>${TSTATUS.find(s=>s.v===x.status)?.t||x.status}</td></tr>`;}).join("")||`<tr><td colspan="7" style="color:var(--ink-soft);padding:20px;text-align:center">Nenhuma tarefa.</td></tr>`}</tbody></table></div>`;
+  $("#tBody").innerHTML=`<div class="panel" style="overflow-x:auto;padding:0"><table class="tbl"><thead><tr><th></th><th>Tarefa</th><th>Projeto</th><th>Responsável</th><th>Prioridade</th><th>Prazo</th><th>Status</th></tr></thead><tbody>${rows.map(x=>{const late=tarefaAtrasada(x);return `<tr onclick="tarefaModal('${x.id}')"><td>${x.status==="concluida"?"✅":(late?"🔴":"⬜")}</td><td><b>${esc(x.titulo)}</b>${(x.tags&&x.tags.length)?` <span class="etq-wrap" style="display:inline-flex">${x.tags.slice(0,3).map(tg=>`<span class="etq">${esc(tg)}</span>`).join("")}</span>`:""}</td><td>${esc(x.projeto||"—")}</td><td>${x.responsavel?faceHtml(x.responsavel,"pface")+" "+esc(x.responsavel):"—"}</td><td><span class="prio prio-${x.prioridade}">${x.prioridade}</span></td><td style="color:${late?"var(--crit)":""}">${x.prazo?brDate(x.prazo):"—"}</td><td>${TSTATUS.find(s=>s.v===x.status)?.t||x.status}</td></tr>`;}).join("")||`<tr><td colspan="7" style="color:var(--ink-soft);padding:20px;text-align:center">Nenhuma tarefa.</td></tr>`}</tbody></table></div>`;
 }
 window.tarefaModal=id=>{
   const editing=!!id;
-  const t=editing?JSON.parse(JSON.stringify(TAREFAS.find(x=>x.id===id))):{id:uid(),titulo:"",descricao:"",projetoId:"",projeto:"",responsavel:"",prioridade:"Média",prazo:"",status:"pendente",checklist:[],comentarios:[]};
+  const t=editing?JSON.parse(JSON.stringify(TAREFAS.find(x=>x.id===id))):{id:uid(),titulo:"",descricao:"",projetoId:"",projeto:"",responsavel:"",prioridade:"Média",prazo:"",status:"pendente",checklist:[],comentarios:[],tags:[]};
+  t.tags=t.tags||[];
   const m=document.createElement("div");m.className="modal-bg";
   const projOpts=`<option value="">—</option>`+PROJETOS.map(p=>`<option value="${esc(p.id)}" ${t.projetoId===p.id?"selected":""}>${esc(p.nome)}</option>`).join("");
   const respOpts=`<option value="">—</option>`+PESSOAS.map(x=>`<option value="${esc(x.nome)}" ${t.responsavel===x.nome?"selected":""}>${esc(x.nome)}</option>`).join("");
@@ -568,9 +578,12 @@ window.tarefaModal=id=>{
       <div class="field-row three"><div class="field"><label>Prioridade</label><select id="t-prio">${PRIOS.map(x=>`<option ${t.prioridade===x?"selected":""}>${x}</option>`).join("")}</select></div>
         <div class="field"><label>Prazo</label><input type="date" id="t-prazo" value="${t.prazo||""}"></div>
         <div class="field"><label>Status</label><select id="t-status">${TSTATUS.map(s=>`<option value="${s.v}" ${t.status===s.v?"selected":""}>${s.t}</option>`).join("")}</select></div></div>
+      <div class="field"><label>Etiquetas</label><div id="t-tags"></div><div style="display:flex;gap:8px;margin-top:6px"><input id="t-tagin" placeholder="Nova etiqueta e Enter"><button class="btn ghost sm" id="t-tagadd" type="button">+ add</button></div></div>
     </div>
     <div class="modal-foot">${editing?`<button class="btn danger sm hide-membro" id="t-del">Excluir</button>`:""}<button class="btn ghost" data-x>Fechar</button><button class="btn" id="t-save">${editing?"Salvar":"Criar"}</button></div></div>`;
   $("#modalMount").appendChild(m);
+  const drawTT=()=>{$("#t-tags").innerHTML=t.tags.length?`<div class="etq-wrap">${t.tags.map((tg,i)=>`<span class="etq">${esc(tg)} <b data-ttx="${i}">×</b></span>`).join("")}</div>`:`<span style="color:var(--ink-soft);font-size:13px">Sem etiquetas</span>`;$("#t-tags").querySelectorAll("[data-ttx]").forEach(b=>b.onclick=()=>{t.tags.splice(+b.dataset.ttx,1);drawTT();});};drawTT();
+  {const addTT=()=>{const inp=$("#t-tagin");const v=(inp.value||"").trim();if(v&&!t.tags.includes(v)){t.tags.push(v);drawTT();}inp.value="";inp.focus();};$("#t-tagadd").onclick=addTT;$("#t-tagin").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addTT();}});}
   m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
   const del=$("#t-del");if(del)del.onclick=async()=>{if(confirm("Excluir tarefa?")){try{await Store.delTarefa(t.id);m.remove();render();toast("Excluída");}catch(e){toast("Erro",true);}}};
   $("#t-save").onclick=async()=>{
@@ -685,12 +698,13 @@ function renderEstrutura(){
 function crmRows(){return PESSOAS.slice().sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt",{sensitivity:"base"}));}
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
 function exportCSV(){
-  const rows=crmRows();const head=["Nome","Apelido","E-mail","Telefone","Diretoria","Cargo","Curso","Período","Status"];
+  const rows=crmRows();if(!confirm("Baixar o CRM em CSV com "+rows.length+" contato(s)?"))return;const head=["Nome","Apelido","E-mail","Telefone","Diretoria","Cargo","Curso","Período","Status"];
   const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
   const lines=[head.join(";")].concat(rows.map(p=>[p.nome,p.apelido,p.email,p.telefone,p.diretoria,p.cargo,p.curso,p.periodo,p.status].map(q).join(";")));
   dl(new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),"crm-ligahub-"+todayISO()+".csv");toast("CSV baixado");
 }
 async function exportXLSX(){
+  if(!confirm("Baixar o CRM em Excel (XLSX) com "+crmRows().length+" contato(s)?"))return;
   if(!window.XLSX){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";s.onload=res;s.onerror=()=>rej(new Error("no lib"));document.head.appendChild(s);});}
   const rows=crmRows().map(p=>({Nome:p.nome,Apelido:p.apelido,"E-mail":p.email,Telefone:p.telefone,Diretoria:p.diretoria,Cargo:p.cargo,Curso:p.curso,"Período":p.periodo,Status:p.status}));
   const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{Nome:"",Apelido:"","E-mail":"",Telefone:"",Diretoria:"",Cargo:"",Curso:"","Período":"",Status:""}]);
@@ -806,7 +820,17 @@ function pontosAuto(nome){
   return {p,det};
 }
 function pontosPessoa(nome){const a=pontosAuto(nome);const man=CONQUISTAS.filter(c=>c.pessoa===nome).reduce((s,c)=>s+(+c.pontos||0),0);return {total:a.p+man,auto:a.p,manual:man,det:a.det};}
-function rankingLista(){return PESSOAS.map(p=>({nome:p.nome,foto:p.foto,diretoria:p.diretoria,cargo:p.cargo,...pontosPessoa(p.nome),badges:CONQUISTAS.filter(c=>c.pessoa===p.nome)})).sort((a,b)=>b.total-a.total);}
+// Conquistas automáticas: marcos disparados pela conclusão de tarefas/projetos/ideias (não manuais)
+function autoBadges(nome){
+  const d=pontosAuto(nome).det;const b=[];
+  const marco=(cond,icone,titulo)=>{if(cond)b.push({id:"auto:"+nome+":"+titulo,pessoa:nome,icone,titulo,pontos:0,motivo:"conquista automática",auto:true});};
+  marco(d.tarefas>=1,"✅","1ª tarefa concluída");marco(d.tarefas>=5,"⚡","5 tarefas concluídas");marco(d.tarefas>=10,"🔥","10 tarefas concluídas");marco(d.tarefas>=25,"🚀","25 tarefas concluídas");
+  marco(d.projetos>=1,"🏗️","1º projeto entregue");marco(d.projetos>=3,"🏆","3 projetos entregues");marco(d.projetos>=5,"👑","5 projetos entregues");
+  marco(d.ideias>=1,"💡","Ideia aprovada");marco(d.ideias>=3,"🧠","3 ideias aprovadas");
+  marco(d.reunioes>=5,"🤝","Presente em 5 reuniões");marco(d.eventos>=1,"🎤","Organizou um evento");
+  return b;
+}
+function rankingLista(){return PESSOAS.map(p=>({nome:p.nome,foto:p.foto,diretoria:p.diretoria,cargo:p.cargo,...pontosPessoa(p.nome),badges:[...autoBadges(p.nome),...CONQUISTAS.filter(c=>c.pessoa===p.nome)]})).sort((a,b)=>b.total-a.total);}
 function renderRanking(){
   const el=$("#v-ranking");const dir=ROLE==="direcao";const lista=rankingLista();
   const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`<span style="color:var(--ink-soft);font-weight:700">${i+1}º</span>`;
@@ -823,7 +847,7 @@ function renderRanking(){
         <div class="rank-pos">${medal(i)}</div>
         <span class="pface lg">${r.foto?`<img src="${esc(r.foto)}" alt="">`:esc(iniciais(r.nome))}</span>
         <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(r.nome)}</div><div style="font-size:12px;color:var(--ink-soft)">${esc(r.cargo||"")}${r.diretoria?" · "+esc(r.diretoria):""}</div>
-          ${r.badges.length?`<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${r.badges.map(b=>`<span class="badge-chip" title="${esc(b.titulo)}${b.motivo?" — "+esc(b.motivo):""}">${b.icone} ${esc(b.titulo)}${dir?` <span class="bx" data-cqdel="${b.id}">×</span>`:""}</span>`).join("")}</div>`:""}
+          ${r.badges.length?`<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${r.badges.map(b=>`<span class="badge-chip${b.auto?" auto":""}" title="${esc(b.titulo)}${b.auto?" (automática)":(b.motivo?" — "+esc(b.motivo):"")}">${b.icone} ${esc(b.titulo)}${dir&&!b.auto?` <span class="bx" data-cqdel="${b.id}">×</span>`:""}</span>`).join("")}</div>`:""}
         </div>
         <div class="rank-pts"><b>${r.total}</b><span>pts</span></div>
       </div>`).join(""):`<div class="empty">Cadastre pessoas para ver o ranking.</div>`}
@@ -923,17 +947,20 @@ const FCATS_REC=["Patrocínio","Mensalidade","Evento","Doação","Parceria","Out
 const FCATS_DES=["Evento","Material","Marketing","Ferramentas/Software","Deslocamento","Taxas","Outros"];
 async function ensureJsPDF(){if(!window.jspdf){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";s.onload=res;s.onerror=()=>rej(new Error("no lib"));document.head.appendChild(s);});}return window.jspdf.jsPDF;}
 
-function finTotais(){
+let FIN_FILTER="";
+function finTotais(filtro){
   let recR=0,recP=0,desR=0,desP=0;
-  FINANCEIRO.forEach(f=>{const v=Number(f.valor)||0;if(f.tipo==="Receita"){if(f.status==="Realizado")recR+=v;else recP+=v;}else{if(f.status==="Realizado")desR+=v;else desP+=v;}});
+  FINANCEIRO.filter(f=>!filtro||f.diretoria===filtro).forEach(f=>{const v=Number(f.valor)||0;if(f.tipo==="Receita"){if(f.status==="Realizado")recR+=v;else recP+=v;}else{if(f.status==="Realizado")desR+=v;else desP+=v;}});
   return {recR,recP,desR,desP,saldoR:recR-desR,saldoP:(recR+recP)-(desR+desP)};
 }
 function renderFinanceiro(){
   const el=$("#v-financeiro");
-  const t=finTotais();
+  const t=finTotais(FIN_FILTER);
   const kpi=(l,v,s,c="")=>`<div class="kpi ${c}"><div class="lab">${l}</div><div class="val">${v}</div>${s?`<div class="sub">${s}</div>`:""}</div>`;
   el.innerHTML=`
-    <div class="toolbar"><h2 style="font-size:19px;margin:0">💰 Controle financeiro</h2><div style="flex:1"></div><button class="btn ghost sm" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button><button class="btn sm" onclick="finModal(null)">+ Lançamento</button></div>
+    <div class="toolbar"><h2 style="font-size:19px;margin:0">💰 Controle financeiro</h2><div style="flex:1"></div>
+      <select id="finFiltro" style="max-width:200px"><option value="">Todas as diretorias</option>${DIRETORIAS.map(d=>`<option value="${esc(d.nome)}" ${FIN_FILTER===d.nome?"selected":""}>${esc(d.nome)}</option>`).join("")}</select>
+      <button class="btn ghost sm" onclick="gerarRelatorioPDF(FIN_FILTER)">📄 Relatório PDF</button><button class="btn sm" onclick="finModal(null)">+ Lançamento</button></div>
     <div class="kpis">
       ${kpi("Receitas realizadas",brMoney(t.recR),(t.recP?brMoney(t.recP)+" previstas":"—"),"accent")}
       ${kpi("Despesas realizadas",brMoney(t.desR),(t.desP?brMoney(t.desP)+" previstas":"—"))}
@@ -942,7 +969,8 @@ function renderFinanceiro(){
     </div>
     <div class="sec-title">Lançamentos</div>
     <div class="panel" style="padding:0;overflow-x:auto"><table class="ftab"><thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Diretoria</th><th>Status</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody id="finRows"></tbody></table></div>`;
-  const rows=[...FINANCEIRO].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  const rows=[...FINANCEIRO].filter(f=>!FIN_FILTER||f.diretoria===FIN_FILTER).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  const fsel=$("#finFiltro");if(fsel)fsel.onchange=()=>{FIN_FILTER=fsel.value;renderFinanceiro();};
   $("#finRows").innerHTML=rows.length?rows.map(f=>`<tr>
       <td>${f.data?brDate(f.data):"—"}</td>
       <td><span class="chip" style="background:${f.tipo==="Receita"?"var(--ok-tint)":"var(--crit-tint)"};color:${f.tipo==="Receita"?"var(--ok)":"var(--crit)"}">${f.tipo}</span></td>
@@ -1013,7 +1041,9 @@ function renderExecutivo(){
     </tbody></table></div>`;
 }
 
-async function gerarRelatorioPDF(){
+async function gerarRelatorioPDF(filtro){
+  filtro=filtro||"";
+  if(!confirm("Gerar o relatório executivo em PDF"+(filtro?` (diretoria: ${filtro})`:" (todas as diretorias)")+"?"))return;
   let jsPDF;try{jsPDF=await ensureJsPDF();}catch(e){toast("Falha ao carregar gerador",true);return;}
   const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
   const W=210;let y=0;
@@ -1022,7 +1052,7 @@ async function gerarRelatorioPDF(){
   doc.setFillColor(15,42,74);doc.rect(0,0,W,46,"F");
   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(22);doc.text("LigaHub Finance",16,24);
   doc.setFont("helvetica","normal");doc.setFontSize(12);doc.text("Relatório executivo de gestão",16,33);
-  doc.setFontSize(9);doc.text("Gerado em "+hoje,16,40);
+  doc.setFontSize(9);doc.text("Gerado em "+hoje+(filtro?"  ·  Diretoria: "+filtro:"  ·  Todas as diretorias"),16,40);
   y=58;
   const sec=(txt)=>{doc.setTextColor(37,99,235);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(txt,16,y);doc.setDrawColor(37,99,235);doc.setLineWidth(.4);doc.line(16,y+2,W-16,y+2);y+=9;doc.setTextColor(40,48,60);doc.setFont("helvetica","normal");doc.setFontSize(11);};
   const line=(l,v)=>{doc.setFont("helvetica","normal");doc.setTextColor(90,102,117);doc.text(l,16,y);doc.setFont("helvetica","bold");doc.setTextColor(20,26,36);doc.text(String(v),W-16,y,{align:"right"});y+=7;};
@@ -1038,7 +1068,7 @@ async function gerarRelatorioPDF(){
   line("Eventos",EVENTOS.length+" ("+EVENTOS.filter(e=>e.status==="Realizado").length+" realizados)");
   y+=4;
   // financeiro
-  const t=finTotais();
+  const t=finTotais(filtro);
   sec("2. Financeiro");
   line("Receitas realizadas",brMoney(t.recR));
   line("Despesas realizadas",brMoney(t.desR));
@@ -1047,7 +1077,7 @@ async function gerarRelatorioPDF(){
   y+=4;
   // por diretoria
   sec("3. Desempenho por diretoria");
-  const stats=dirStats().sort((a,b)=>b.ativos-a.ativos);
+  const stats=dirStats().filter(s=>!filtro||s.nome===filtro).sort((a,b)=>b.ativos-a.ativos);
   doc.setFontSize(9);doc.setTextColor(120,130,145);
   doc.text("Diretoria",16,y);doc.text("Proj.",96,y);doc.text("Ativos",116,y);doc.text("Concl.",138,y);doc.text("Conc.%",160,y);doc.text("Saldo",W-16,y,{align:"right"});y+=5;
   doc.setDrawColor(220,226,235);doc.line(16,y-2,W-16,y-2);
@@ -1145,7 +1175,7 @@ function notifModal(){
     <div class="modal-foot"><button class="btn ghost" id="notifClr">Marcar todas como lidas</button><button class="btn" data-x>Fechar</button></div></div>`;
   $("#modalMount").appendChild(bg);
   bg.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>bg.remove());bg.onclick=e=>{if(e.target===bg)bg.remove();};
-  const draw=()=>{const box=$("#notifList");if(!EU){box.innerHTML=`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Escolha seu nome para ver o que foi atribuído a você.</div>`;return;}const mine=NOTIF.filter(n=>n.membro===EU).slice(0,60);box.innerHTML=mine.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">`+mine.map(n=>`<div style="border:1px solid var(--line);border-left:4px solid ${n.lida?"var(--line)":"var(--brand)"};border-radius:10px;padding:10px 12px;background:${n.lida?"var(--panel-2)":"var(--brand-tint)"}"><div style="font-weight:700;font-size:13.5px">${esc(n.titulo||"Notificação")}</div><div style="font-size:13px;margin-top:2px">${esc(n.texto||"")}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${n.criado_em?new Date(n.criado_em).toLocaleString("pt-BR"):""}</div></div>`).join("")+`</div>`:`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Nenhuma notificação por enquanto.</div>`;};
+  const draw=()=>{const box=$("#notifList");if(!EU){box.innerHTML=`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Escolha seu nome para ver o que foi atribuído a você.</div>`;return;}const mine=NOTIF.filter(n=>n.membro===EU).slice(0,60);box.innerHTML=mine.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">`+mine.map(n=>{const alvo=n.ref_id&&(TAREFAS.some(x=>x.id===n.ref_id)?"tarefa":(PROJETOS.some(x=>x.id===n.ref_id)?"projeto":""));return `<div class="notif-item" ${alvo?`data-ref="${esc(n.ref_id)}" data-alvo="${alvo}" style="cursor:pointer;"`:""} style="border:1px solid var(--line);border-left:4px solid ${n.lida?"var(--line)":"var(--brand)"};border-radius:10px;padding:10px 12px;background:${n.lida?"var(--panel-2)":"var(--brand-tint)"}${alvo?";cursor:pointer":""}"><div style="font-weight:700;font-size:13.5px">${esc(n.titulo||"Notificação")}</div><div style="font-size:13px;margin-top:2px">${esc(n.texto||"")}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${n.criado_em?new Date(n.criado_em).toLocaleString("pt-BR"):""}${alvo?` · <span style="color:var(--brand);font-weight:600">abrir ${alvo} ›</span>`:""}</div></div>`;}).join("")+`</div>`:`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Nenhuma notificação por enquanto.</div>`;box.querySelectorAll(".notif-item[data-ref]").forEach(el=>el.onclick=()=>{const ref=el.dataset.ref,alvo=el.dataset.alvo;bg.remove();if(alvo==="tarefa"){switchView("tarefas");tarefaModal(ref);}else if(alvo==="projeto"){switchView("projetos");projModal(ref,true);}});};
   $("#euSel").onchange=()=>{EU=$("#euSel").value;try{localStorage.setItem("liga_eu",EU);}catch(e){}draw();renderBell();};draw();
   $("#notifClr").onclick=async()=>{if(!EU)return;lastWrite=Date.now();await Store.marcarLidas(EU);draw();renderBell();};
 }
