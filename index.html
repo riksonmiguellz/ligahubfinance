@@ -297,7 +297,7 @@ const STATUS=["Em análise","Planejamento","Em execução","Revisão","Concluíd
 const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#2563EB","Planejamento":"#6b5bd4","Em execução":"#0E9F8E","Revisão":"#C67C00","Concluído":"#12A150","Cancelado":"#D62F2F"};
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
-let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0;
+let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0,CAN_PROVISION=false;
 let PESSOAS=[],DIRETORIAS=[],PROJETOS=[],TAREFAS=[],NOTIF=[],IDEIAS=[],REUNIOES=[],CANDIDATOS=[],APROVACOES=[],MURAL=[],EVENTOS=[],FINANCEIRO=[],CONQUISTAS=[],AVALIACOES=[];
 let VIEW="dashboard",PROJ_VIEW="kanban",EU="";
 try{EU=localStorage.getItem("liga_eu")||"";}catch(e){}
@@ -385,7 +385,7 @@ const Store={
   async notificar(membro,titulo,texto,refId){if(!membro)return;const n={id:uid()+Math.random().toString(36).slice(2,6),membro,tipo:"atribuicao",ref_id:refId||null,titulo,texto,lida:false,criado_em:new Date().toISOString()};NOTIF.unshift(n);try{await sb.from("liga_notificacoes").insert(n);}catch(e){}this.emailNotify({tipo:"pessoa",alvoNome:membro,titulo,texto});},
   async emailNotify(payload){try{await fetch(CONFIG.SUPABASE_URL+"/functions/v1/notify-email",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.SUPABASE_ANON_KEY,"Authorization":"Bearer "+CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify(payload)});}catch(e){}},
   async marcarLidas(membro){NOTIF.forEach(n=>{if(n.membro===membro)n.lida=true;});try{await sb.from("liga_notificacoes").update({lida:true}).eq("membro",membro).eq("lida",false);}catch(e){}},
-  async login(email,pass){await ensureSB();const {error}=await sb.auth.signInWithPassword({email:(email||"").trim().toLowerCase(),password:pass});if(error)throw new Error("E-mail ou senha inválidos");SESSION=true;let role="membro",nome="";try{const {data}=await sb.from("liga_membros_auth").select("nome,role").limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";}}catch(e){}await this.reload();return {role,nome};},
+  async login(email,pass){await ensureSB();const {error}=await sb.auth.signInWithPassword({email:(email||"").trim().toLowerCase(),password:pass});if(error)throw new Error("E-mail ou senha inválidos");SESSION=true;let role="membro",nome="";CAN_PROVISION=false;try{const {data}=await sb.from("liga_membros_auth").select("nome,role,provisiona").limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";CAN_PROVISION=data[0].provisiona===true;}}catch(e){}await this.reload();return {role,nome};},
   async logout(){try{if(SESSION)await sb.auth.signOut();}catch(e){}SESSION=false;await this.reload().catch(()=>{});}
 };
 
@@ -400,7 +400,7 @@ $("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="E
 async function doLogin(){const b=$("#pwGo");b.disabled=true;b.textContent="Entrando...";$("#gateErr").textContent="";try{const r=await Store.login($("#email").value,$("#pw").value);enter(r.role,r.nome);}catch(e){$("#gateErr").textContent=e.message||"Falha ao entrar.";$("#pw").select();}finally{b.disabled=false;b.textContent="Entrar";}}
 $("#btnPortfolioPub").onclick=()=>openPortfolioPublic();
 function enter(role,nome){ROLE=role;if(nome){EU=nome;try{localStorage.setItem("liga_eu",nome);}catch(e){}}$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");try{window.BGFX&&window.BGFX.stop();}catch(e){}document.body.classList.toggle("membro",role==="membro");$("#rolePill").textContent=(role==="direcao"?"Direção":"Membro")+(nome?" · "+nome:"");switchView("dashboard");render();}
-$("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;EU="";try{localStorage.removeItem("liga_eu");}catch(e){}$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";try{window.BGFX&&window.BGFX.start();}catch(e){}};
+$("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;CAN_PROVISION=false;EU="";try{localStorage.removeItem("liga_eu");}catch(e){}$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";try{window.BGFX&&window.BGFX.start();}catch(e){}};
 
 /* ---------- nav / views ---------- */
 $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>switchView(b.dataset.v));
@@ -604,6 +604,7 @@ function renderPessoas(){
   const pend=rows.filter(p=>!p.aprovado).length;
   el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input type="text" id="qP" placeholder="Buscar pessoa..."></div>
     ${pend&&ROLE==="direcao"?`<span class="pending-badge">${pend} pendente(s)</span>`:""}
+    ${CAN_PROVISION?`<button class="btn ghost sm" onclick="gerarAcessoModal()">🔑 Gerar acesso</button>`:""}
     <button class="btn sm" onclick="pessoaModal(null)">${ROLE==="direcao"?"+ Adicionar pessoa":"+ Cadastrar-me"}</button></div>
     <div class="grid-cards" id="pBody"></div>`;
   const q=$("#qP");q.oninput=()=>drawPessoas(q.value);drawPessoas("");
@@ -1178,6 +1179,41 @@ function notifModal(){
   draw();
   $("#notifClr").onclick=async()=>{if(!EU)return;lastWrite=Date.now();await Store.marcarLidas(EU);draw();renderBell();};
 }
+
+/* ---------- GERAR ACESSO (provisionamento) ---------- */
+window.gerarAcessoModal=()=>{
+  const m=document.createElement("div");m.className="modal-bg";
+  const pessoasComEmail=[...PESSOAS].filter(p=>p.email).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+  const opts=`<option value="">— escolher pessoa cadastrada —</option>`+pessoasComEmail.map((p,i)=>`<option value="${i}">${esc(p.nome)} · ${esc(p.email)}</option>`).join("");
+  m.innerHTML=`<div class="modal" style="max-width:520px"><div class="modal-head"><h2>🔑 Gerar acesso</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field"><label>Pessoa cadastrada (opcional)</label><select id="ga-pessoa">${opts}</select></div>
+    <div class="field-row"><div class="field"><label>Nome</label><input id="ga-nome" placeholder="Nome completo"></div><div class="field"><label>Papel</label><select id="ga-role"><option value="membro">Membro (sem financeiro)</option><option value="direcao">Direção (vê tudo)</option></select></div></div>
+    <div class="field"><label>E-mail (login)</label><input id="ga-email" type="email" placeholder="email@exemplo.com"></div>
+    <div id="ga-result" style="display:none;margin-top:6px;padding:14px;border-radius:12px;background:var(--ok-tint);border:1px solid var(--ok)"></div>
+    <div class="err" id="ga-err"></div>
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Fechar</button><button class="btn" id="ga-go">Gerar acesso</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
+  $("#ga-pessoa").onchange=()=>{const i=$("#ga-pessoa").value;if(i==="")return;const p=pessoasComEmail[+i];$("#ga-nome").value=p.nome||"";$("#ga-email").value=p.email||"";if(p.cargo){const c=(p.cargo||"").toLowerCase();$("#ga-role").value=/(presidente|diretor|vice|governan)/.test(c)?"direcao":"membro";}};
+  $("#ga-go").onclick=async()=>{
+    const nome=$("#ga-nome").value.trim(),email=$("#ga-email").value.trim().toLowerCase(),role=$("#ga-role").value;
+    $("#ga-err").textContent="";
+    if(!nome||!email||!email.includes("@")){$("#ga-err").textContent="Preencha nome e e-mail válido.";return;}
+    const b=$("#ga-go");b.disabled=true;b.innerHTML='<span class="spin"></span>';
+    try{
+      const {data,error}=await sb.functions.invoke("provision-login",{body:{nome,email,role}});
+      if(error||!data||!data.ok){throw new Error((data&&data.error)||(error&&error.message)||"falha");}
+      const res=$("#ga-result");res.style.display="block";
+      res.innerHTML=`<div style="font-weight:700;margin-bottom:6px">✅ Acesso ${data.criado?"criado":"atualizado"} para ${esc(data.nome)}</div>
+        <div style="font-size:13.5px;line-height:1.7">E-mail: <b>${esc(data.email)}</b><br>Senha: <b style="font-size:16px;color:var(--brand)">${esc(data.senha)}</b><br>Papel: <b>${data.role==="direcao"?"Direção":"Membro"}</b></div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" id="ga-copy" type="button">📋 Copiar</button><button class="btn ghost sm" id="ga-mail" type="button">📧 Enviar por e-mail</button></div>`;
+      $("#ga-copy").onclick=()=>{const txt=`LigaHub — seu acesso\nLink: https://riksonmiguellz.github.io/ligahubfinance/\nE-mail: ${data.email}\nSenha: ${data.senha}`;navigator.clipboard.writeText(txt).then(()=>toast("Copiado")).catch(()=>toast("Copie manualmente",true));};
+      $("#ga-mail").onclick=async()=>{const mb=$("#ga-mail");mb.disabled=true;mb.textContent="Enviando...";try{const r=await sb.functions.invoke("notify-email",{body:{toOverride:data.email,titulo:"Seu acesso ao LigaHub",texto:`Olá ${data.nome}! Seu acesso: e-mail ${data.email} e senha ${data.senha}. Recomendamos trocar a senha no primeiro acesso.`,link:"https://riksonmiguellz.github.io/ligahubfinance/"}});if(r.data&&r.data.ok)toast("E-mail enviado");else toast("E-mail não pôde ser enviado (verifique domínio)",true);}catch(e){toast("Falha no e-mail",true);}mb.disabled=false;mb.textContent="📧 Enviar por e-mail";};
+      Store.reload().catch(()=>{});toast("Acesso gerado");
+    }catch(e){$("#ga-err").textContent="Erro: "+(e.message||"não foi possível gerar");}
+    b.disabled=false;b.textContent="Gerar acesso";
+  };
+};
 
 /* ---------- gate facepile ---------- */
 function renderGateTeam(){const el=$("#gateTeam");if(!el)return;const ms=PESSOAS.slice().sort((a,b)=>(a.ordem||0)-(b.ordem||0));if(!ms.length){el.innerHTML="";return;}const shown=ms.slice(0,9);el.innerHTML=`<div class="gate-team-label">👥 Equipe · ${ms.length}</div><div class="gate-avatars">${shown.map(m=>`<span class="ga" title="${esc(m.nome)}">${m.foto?`<img src="${esc(m.foto)}" alt="">`:esc(iniciais(m.nome))}</span>`).join("")}${ms.length>shown.length?`<span class="ga more">+${ms.length-shown.length}</span>`:""}</div>`;}
