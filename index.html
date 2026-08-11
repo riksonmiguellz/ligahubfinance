@@ -232,6 +232,7 @@ body.membro .hide-membro{display:none !important}
     <span class="pill" id="rolePill">—</span>
     <div class="spacer"></div>
     <button class="btn ghost sm bell" id="bellBtn" title="Minhas notificações">🔔<span class="bell-badge hidden" id="bellCount">0</span></button>
+    <button class="btn ghost sm" id="senhaBtn">🔑 Trocar senha</button>
     <button class="btn ghost sm" id="logoutBtn">Sair</button>
   </div>
   <div class="nav" id="nav">
@@ -400,6 +401,25 @@ $("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="E
 async function doLogin(){const b=$("#pwGo");b.disabled=true;b.textContent="Entrando...";$("#gateErr").textContent="";try{const r=await Store.login($("#email").value,$("#pw").value);enter(r.role,r.nome);}catch(e){$("#gateErr").textContent=e.message||"Falha ao entrar.";$("#pw").select();}finally{b.disabled=false;b.textContent="Entrar";}}
 $("#btnPortfolioPub").onclick=()=>openPortfolioPublic();
 function enter(role,nome){ROLE=role;if(nome){EU=nome;try{localStorage.setItem("liga_eu",nome);}catch(e){}}$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");try{window.BGFX&&window.BGFX.stop();}catch(e){}document.body.classList.toggle("membro",role==="membro");$("#rolePill").textContent=(role==="direcao"?"Direção":"Membro")+(nome?" · "+nome:"");switchView("dashboard");render();}
+$("#senhaBtn").onclick=()=>trocarSenhaModal();
+window.trocarSenhaModal=()=>{
+  const m=document.createElement("div");m.className="modal-bg";
+  m.innerHTML=`<div class="modal" style="max-width:420px"><div class="modal-head"><h2>🔑 Trocar minha senha</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input id="ts-a" type="password" autocomplete="new-password" placeholder="Nova senha"></div>
+    <div class="field"><label>Repita a nova senha</label><input id="ts-b" type="password" autocomplete="new-password" placeholder="Repita a senha"></div>
+    <div class="err" id="ts-err"></div>
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn" id="ts-go">Salvar nova senha</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
+  $("#ts-go").onclick=async()=>{
+    const a=$("#ts-a").value,b=$("#ts-b").value;$("#ts-err").textContent="";
+    if(a.length<6){$("#ts-err").textContent="A senha precisa ter ao menos 6 caracteres.";return;}
+    if(a!==b){$("#ts-err").textContent="As senhas não conferem.";return;}
+    const btn=$("#ts-go");btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{await ensureSB();const {error}=await sb.auth.updateUser({password:a});if(error)throw error;m.remove();toast("Senha alterada com sucesso");}
+    catch(e){btn.disabled=false;btn.textContent="Salvar nova senha";$("#ts-err").textContent="Erro: "+(e.message||"não foi possível alterar");}
+  };
+};
 $("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;CAN_PROVISION=false;EU="";try{localStorage.removeItem("liga_eu");}catch(e){}$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";try{window.BGFX&&window.BGFX.start();}catch(e){}};
 
 /* ---------- nav / views ---------- */
@@ -605,7 +625,7 @@ function renderPessoas(){
   el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input type="text" id="qP" placeholder="Buscar pessoa..."></div>
     ${pend&&ROLE==="direcao"?`<span class="pending-badge">${pend} pendente(s)</span>`:""}
     ${CAN_PROVISION?`<button class="btn ghost sm" onclick="gerarAcessoModal()">🔑 Gerar acesso</button>`:""}
-    <button class="btn sm" onclick="pessoaModal(null)">${ROLE==="direcao"?"+ Adicionar pessoa":"+ Cadastrar-me"}</button></div>
+    ${ROLE==="direcao"?`<button class="btn sm" onclick="pessoaModal(null)">+ Adicionar pessoa</button>`:""}</div>
     <div class="grid-cards" id="pBody"></div>`;
   const q=$("#qP");q.oninput=()=>drawPessoas(q.value);drawPessoas("");
 }
@@ -624,7 +644,7 @@ function pessoaCard(p){
     <div class="p2-tags">${p.diretoria?`<span class="tag dir">${esc(p.diretoria)}</span>`:""}${p.curso?`<span class="tag">${esc(p.curso)}${p.periodo?" · "+esc(p.periodo)+"º":""}</span>`:""}${p.status&&p.status!=="ativo"?`<span class="tag">${esc(p.status)}</span>`:""}</div>
     ${p.competencias?`<div style="font-size:12.5px;color:var(--ink-soft)">${esc(p.competencias)}</div>`:""}
     <div class="p2-contacts">${wa?`<a class="cbtn wa" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:""}${p.email?`<a class="cbtn ml" href="mailto:${esc(p.email)}">E-mail</a>`:""}${p.linkedin?`<a class="cbtn li" href="${esc(p.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:""}</div>
-    <div class="p2-actions"><button class="btn ghost sm" data-ped="${p.id}">Editar</button>${dir&&!p.aprovado?`<button class="btn sm" data-pap="${p.id}">Aprovar</button>`:""}${dir?`<button class="link" style="color:var(--crit)" data-pdel="${p.id}">remover</button>`:""}</div>
+    <div class="p2-actions">${(dir||p.nome===EU)?`<button class="btn ghost sm" data-ped="${p.id}">Editar${(!dir&&p.nome===EU)?" meu perfil":""}</button>`:""}${dir&&!p.aprovado?`<button class="btn sm" data-pap="${p.id}">Aprovar</button>`:""}${dir?`<button class="link" style="color:var(--crit)" data-pdel="${p.id}">remover</button>`:""}</div>
   </div>`;
 }
 function wirePessoas(){
@@ -635,6 +655,8 @@ function wirePessoas(){
 window.pessoaModal=id=>{
   const editing=!!id;const dir=ROLE==="direcao";
   const p=editing?Object.assign({},PESSOAS.find(x=>x.id===id)):{id:uid(),nome:"",apelido:"",foto:"",email:"",telefone:"",curso:"",periodo:"",dataIngresso:todayISO(),diretoria:"",cargo:"",status:"ativo",competencias:"",linkedin:"",aprovado:dir,ordem:(PESSOAS.reduce((m,x)=>Math.max(m,x.ordem||0),0)+1)};
+  if(!dir && editing && p.nome!==EU){toast("Você só pode editar o seu próprio perfil",true);return;}
+  if(!dir && !editing){toast("Só a Direção adiciona novas pessoas",true);return;}
   let novaFoto=null;
   const dirOpts=`<option value="">—</option>`+DIRETORIAS.map(d=>`<option value="${esc(d.nome)}" ${p.diretoria===d.nome?"selected":""}>${esc(d.nome)}</option>`).join("");
   const m=document.createElement("div");m.className="modal-bg";
@@ -649,7 +671,7 @@ window.pessoaModal=id=>{
       <div class="field"><label>Competências</label><input id="m-comp" value="${esc(p.competencias)}" placeholder="Ex.: Excel, Design, Copy"></div>
       <div class="field"><label>LinkedIn (opcional)</label><input id="m-lk" value="${esc(p.linkedin)}" placeholder="https://linkedin.com/in/..."></div>
       <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">Obrigatórios: foto, nome, apelido, e-mail, telefone e cargo. A diretoria é obrigatória, exceto para Conselheiro (atende todas as áreas).</div>
-      ${!dir?`<div style="font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px">Seus dados passam pela aprovação da Direção antes de ficarem oficiais.</div>`:""}
+      ${(!dir&&!editing)?`<div style="font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px">Seus dados passam pela aprovação da Direção antes de ficarem oficiais.</div>`:""}
       <div class="err" id="m-err" style="margin-top:8px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn" id="m-save">${editing?"Salvar":"Enviar"}</button></div></div>`;
@@ -671,8 +693,8 @@ window.pessoaModal=id=>{
       p.nome=v.nome;p.apelido=v.apelido;p.email=v.email;p.telefone=v.telefone;
       p.curso=$("#m-curso").value.trim();p.periodo=$("#m-per").value.trim();p.dataIngresso=$("#m-ing").value;
       p.cargo=v.cargo;p.diretoria=isConselho?"":v.diretoria;p.competencias=$("#m-comp").value.trim();p.linkedin=$("#m-lk").value.trim();
-      p.aprovado=dir;
-      await Store.savePessoa(p);m.remove();render();toast(dir?"Salvo":"Enviado para aprovação");
+      if(dir)p.aprovado=true;else if(!editing)p.aprovado=false; // editando o próprio: mantém aprovação atual
+      await Store.savePessoa(p);m.remove();render();toast("Salvo");
     }catch(e){b.disabled=false;b.textContent="Salvar";$("#m-err").textContent="Erro ao salvar: "+(e.message||"");toast("Erro ao salvar",true);}
   };
 };
