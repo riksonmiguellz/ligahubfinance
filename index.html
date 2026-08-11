@@ -214,13 +214,11 @@ body.membro .hide-membro{display:none !important}
     <h1>Gestão Interna</h1>
     <div class="sub">Projetos, tarefas, pessoas e indicadores da Liga.</div>
     <div class="roles">
-      <button class="role-btn" id="btnDir"><span class="ic">🔐</span><span><span class="t">Acesso Direção</span><br><span class="d">Presidência · Vice · Diretores — gestão completa</span></span></button>
-      <div class="pw-row" id="pwRow">
-        <input type="email" id="email" placeholder="E-mail da Direção" autocomplete="username">
-        <input type="password" id="pw" placeholder="Senha" autocomplete="current-password">
+      <div class="pw-row show" id="pwRow">
+        <input type="email" id="email" placeholder="Seu e-mail" autocomplete="username">
+        <input type="password" id="pw" placeholder="Sua senha" autocomplete="current-password">
         <button class="btn" id="pwGo">Entrar</button>
       </div>
-      <button class="role-btn" id="btnMembro"><span class="ic">👥</span><span><span class="t">Acesso Membro</span><br><span class="d">Projetos, tarefas e o que é meu</span></span></button>
     </div>
     <div class="err" id="gateErr"></div>
     <button class="link" id="btnPortfolioPub" style="margin-top:14px;font-weight:650;color:var(--brand)">🌐 Ver portfólio público da Liga</button>
@@ -387,7 +385,7 @@ const Store={
   async notificar(membro,titulo,texto,refId){if(!membro)return;const n={id:uid()+Math.random().toString(36).slice(2,6),membro,tipo:"atribuicao",ref_id:refId||null,titulo,texto,lida:false,criado_em:new Date().toISOString()};NOTIF.unshift(n);try{await sb.from("liga_notificacoes").insert(n);}catch(e){}this.emailNotify({tipo:"pessoa",alvoNome:membro,titulo,texto});},
   async emailNotify(payload){try{await fetch(CONFIG.SUPABASE_URL+"/functions/v1/notify-email",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.SUPABASE_ANON_KEY,"Authorization":"Bearer "+CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify(payload)});}catch(e){}},
   async marcarLidas(membro){NOTIF.forEach(n=>{if(n.membro===membro)n.lida=true;});try{await sb.from("liga_notificacoes").update({lida:true}).eq("membro",membro).eq("lida",false);}catch(e){}},
-  async login(email,pass){await ensureSB();const {error}=await sb.auth.signInWithPassword({email:email||CONFIG.DIR_EMAIL,password:pass});if(error)throw new Error("Login inválido");SESSION=true;await this.reload();return true;},
+  async login(email,pass){await ensureSB();const {error}=await sb.auth.signInWithPassword({email:(email||"").trim().toLowerCase(),password:pass});if(error)throw new Error("E-mail ou senha inválidos");SESSION=true;let role="membro",nome="";try{const {data}=await sb.from("liga_membros_auth").select("nome,role").limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";}}catch(e){}await this.reload();return {role,nome};},
   async logout(){try{if(SESSION)await sb.auth.signOut();}catch(e){}SESSION=false;await this.reload().catch(()=>{});}
 };
 
@@ -398,13 +396,11 @@ const projAtivo=p=>p.status!=="Concluído"&&p.status!=="Cancelado";
 const tarefaAtrasada=t=>t.prazo&&t.status!=="concluida"&&t.prazo<todayISO();
 
 /* ---------- auth ---------- */
-$("#btnDir").onclick=()=>{$("#pwRow").classList.add("show");($("#email").value?$("#pw"):$("#email")).focus();};
-$("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-async function doLogin(){const b=$("#pwGo");b.disabled=true;$("#gateErr").textContent="";try{await Store.login($("#email").value.trim(),$("#pw").value);enter("direcao");}catch(e){$("#gateErr").textContent=e.message||"Falha.";$("#pw").select();}finally{b.disabled=false;}}
-$("#btnMembro").onclick=async()=>{try{if(SESSION)await Store.logout();}catch(e){}enter("membro");};
+$("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});$("#email").addEventListener("keydown",e=>{if(e.key==="Enter")$("#pw").focus();});
+async function doLogin(){const b=$("#pwGo");b.disabled=true;b.textContent="Entrando...";$("#gateErr").textContent="";try{const r=await Store.login($("#email").value,$("#pw").value);enter(r.role,r.nome);}catch(e){$("#gateErr").textContent=e.message||"Falha ao entrar.";$("#pw").select();}finally{b.disabled=false;b.textContent="Entrar";}}
 $("#btnPortfolioPub").onclick=()=>openPortfolioPublic();
-function enter(role){ROLE=role;$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");try{window.BGFX&&window.BGFX.stop();}catch(e){}document.body.classList.toggle("membro",role==="membro");$("#rolePill").textContent=role==="direcao"?"Direção":"Membro";switchView("dashboard");render();}
-$("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";$("#pwRow").classList.remove("show");try{window.BGFX&&window.BGFX.start();}catch(e){}};
+function enter(role,nome){ROLE=role;if(nome){EU=nome;try{localStorage.setItem("liga_eu",nome);}catch(e){}}$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");try{window.BGFX&&window.BGFX.stop();}catch(e){}document.body.classList.toggle("membro",role==="membro");$("#rolePill").textContent=(role==="direcao"?"Direção":"Membro")+(nome?" · "+nome:"");switchView("dashboard");render();}
+$("#logoutBtn").onclick=async()=>{try{await Store.logout();}catch(e){}ROLE=null;EU="";try{localStorage.removeItem("liga_eu");}catch(e){}$("#app").classList.add("hidden");$("#gate").classList.remove("hidden");$("#pw").value="";try{window.BGFX&&window.BGFX.start();}catch(e){}};
 
 /* ---------- nav / views ---------- */
 $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>switchView(b.dataset.v));
@@ -1173,14 +1169,13 @@ function renderCalendario(){
 function renderBell(){const el=$("#bellCount");if(!el)return;const n=EU?NOTIF.filter(x=>x.membro===EU&&!x.lida).length:0;el.textContent=n>99?"99+":String(n);el.classList.toggle("hidden",n===0);}
 function notifModal(){
   const bg=document.createElement("div");bg.className="modal-bg";
-  const opts=`<option value="">— selecione seu nome —</option>`+PESSOAS.slice().sort((a,b)=>(a.ordem||0)-(b.ordem||0)).map(m=>`<option value="${esc(m.nome)}" ${EU===m.nome?"selected":""}>${esc(m.nome)}</option>`).join("");
-  bg.innerHTML=`<div class="modal" style="max-width:460px"><div class="modal-head"><h2>🔔 Minhas notificações</h2><button class="close-x" data-x>×</button></div>
-    <div class="modal-body"><div class="field"><label>Quem é você?</label><select id="euSel">${opts}</select></div><div id="notifList"></div></div>
+  bg.innerHTML=`<div class="modal" style="max-width:460px"><div class="modal-head"><h2>🔔 Notificações de ${esc(EU||"você")}</h2><button class="close-x" data-x>×</button></div>
+    <div class="modal-body"><div id="notifList"></div></div>
     <div class="modal-foot"><button class="btn ghost" id="notifClr">Marcar todas como lidas</button><button class="btn" data-x>Fechar</button></div></div>`;
   $("#modalMount").appendChild(bg);
   bg.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>bg.remove());bg.onclick=e=>{if(e.target===bg)bg.remove();};
   const draw=()=>{const box=$("#notifList");if(!EU){box.innerHTML=`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Escolha seu nome para ver o que foi atribuído a você.</div>`;return;}const mine=NOTIF.filter(n=>n.membro===EU).slice(0,60);box.innerHTML=mine.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">`+mine.map(n=>{const alvo=n.ref_id&&(TAREFAS.some(x=>x.id===n.ref_id)?"tarefa":(PROJETOS.some(x=>x.id===n.ref_id)?"projeto":""));return `<div class="notif-item" ${alvo?`data-ref="${esc(n.ref_id)}" data-alvo="${alvo}" style="cursor:pointer;"`:""} style="border:1px solid var(--line);border-left:4px solid ${n.lida?"var(--line)":"var(--brand)"};border-radius:10px;padding:10px 12px;background:${n.lida?"var(--panel-2)":"var(--brand-tint)"}${alvo?";cursor:pointer":""}"><div style="font-weight:700;font-size:13.5px">${esc(n.titulo||"Notificação")}</div><div style="font-size:13px;margin-top:2px">${esc(n.texto||"")}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${n.criado_em?new Date(n.criado_em).toLocaleString("pt-BR"):""}${alvo?` · <span style="color:var(--brand);font-weight:600">abrir ${alvo} ›</span>`:""}</div></div>`;}).join("")+`</div>`:`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Nenhuma notificação por enquanto.</div>`;box.querySelectorAll(".notif-item[data-ref]").forEach(el=>el.onclick=()=>{const ref=el.dataset.ref,alvo=el.dataset.alvo;bg.remove();if(alvo==="tarefa"){switchView("tarefas");tarefaModal(ref);}else if(alvo==="projeto"){switchView("projetos");projModal(ref,true);}});};
-  $("#euSel").onchange=()=>{EU=$("#euSel").value;try{localStorage.setItem("liga_eu",EU);}catch(e){}draw();renderBell();};draw();
+  draw();
   $("#notifClr").onclick=async()=>{if(!EU)return;lastWrite=Date.now();await Store.marcarLidas(EU);draw();renderBell();};
 }
 
