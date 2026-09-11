@@ -217,109 +217,82 @@ body.membro .hide-membro{display:none !important}
 @media(max-width:680px){.field-row,.field-row.three{grid-template-columns:1fr}.wrap{padding:14px 12px 70px}.nav{padding:8px 12px 0}}
 </style>
 <style id="hf-skin">
-/* ═══════════ HUB FINANCE — skin premium (design system do site) ═══════════ */
+/* HUB FINANCE — skin OFF-WHITE (lado editorial do manual: #F2F0EA + grafite) */
 :root{
-  --bg:#000000; --panel:#0a0a0a; --panel-2:#0d0d0d;
-  --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.22);
+  --bg:#F2F0EA; --panel:#FBFAF6; --panel-2:#EDEBE3;
+  --ink:#101010; --ink-soft:#5E5B54;
+  --line:rgba(16,16,16,.13); --line-strong:rgba(16,16,16,.24);
+  --brand:#2E2E2E; --brand-soft:#5E5E5E; --brand-tint:rgba(16,16,16,.07); --deep:#101010;
   --radius:2px;
-  --shadow:0 12px 32px -16px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.05);
+  --shadow:0 10px 28px -14px rgba(20,18,12,.18),0 0 0 1px rgba(16,16,16,.05);
 }
-/* piano black com brilho radial fixo — assinatura do site */
 body{
-  background:#000;
-  background-image:radial-gradient(ellipse 1200px 600px at 50% -10%,rgba(255,255,255,.04),transparent 60%),radial-gradient(ellipse 800px 400px at 100% 100%,rgba(255,255,255,.025),transparent 60%);
-  background-attachment:fixed;
+  background:#F2F0EA;
+  background-image:radial-gradient(ellipse 1100px 520px at 50% -8%,rgba(255,255,255,.9),transparent 60%),radial-gradient(ellipse 900px 460px at 100% 100%,rgba(16,16,16,.035),transparent 60%);
+  background-attachment:fixed; color:#101010;
 }
-::selection{background:#C4C4C4;color:#0a0a0a}
+::selection{background:#101010;color:#F2F0EA}
 ::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:#000}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2A2A2A,#101010);border-radius:0;border:1px solid #0a0a0a}
-::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#C4C4C4,#7A7A7A)}
-
-/* ── topo: glass nav ── */
-.topbar{background:rgba(0,0,0,.72);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.06);box-shadow:0 1px 0 rgba(255,255,255,.02) inset,0 8px 32px -8px rgba(0,0,0,.8)}
-.topbar .brand>span:last-child{text-transform:uppercase;letter-spacing:.16em;font-size:13px;font-weight:600;color:#F2F0EA}
-.pf-topbar{background:rgba(0,0,0,.72);backdrop-filter:blur(20px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.06)}
-
-/* ── navegação: abas retas, caps, tracking ── */
-.nav button{background:#0c0c0c;border:1px solid rgba(255,255,255,.12);border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600;font-family:"Montserrat",sans-serif}
-.nav button:hover{color:#F2F0EA;border-color:rgba(255,255,255,.1)}
-.nav button.active{background:linear-gradient(177deg,#E8E8E8 0%,#B5B5B5 60%,#8A8A8A 100%);border-color:transparent;color:#101010;filter:none}
-
-/* ── superfícies premium: luz interna no topo + anel-sussurro ── */
-.panel,.kpi,.dir-card,.modal{
-  background:linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(255,255,255,0) 55%),#0a0a0a;
-  border:1px solid rgba(255,255,255,.13);border-radius:2px;
-  box-shadow:0 12px 32px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);
-}
-.kcol{background:#070707;border:1px solid rgba(255,255,255,.12);border-radius:2px}
-.pcard{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 60%),#0d0d0d;border:1px solid rgba(255,255,255,.14);border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease}
-.pcard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16);box-shadow:0 20px 44px -18px rgba(0,0,0,.9),0 0 34px -16px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.05)}
-.gate-card{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 55%),rgba(10,10,10,.9);border:1px solid rgba(255,255,255,.08);border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.04)}
-.gate-card::before{height:2px;background:linear-gradient(90deg,transparent 4%,rgba(196,196,196,.7) 35%,rgba(236,215,158,.95) 50%,rgba(196,196,196,.7) 65%,transparent 96%);box-shadow:0 0 12px -1px rgba(196,196,196,.4)}
-.modal{border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95),0 4px 16px -4px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04)}
-.modal-bg{background:rgba(0,0,0,.72);backdrop-filter:blur(8px)}
-
-/* ── CTA metálico (assinatura do site) ── */
-.btn{background:linear-gradient(177deg,#E8E8E8 0%,#B5B5B5 42%,#8A8A8A 78%,#7A7A7A 100%);color:#101010;border:none;border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-family:"Montserrat",sans-serif;font-weight:700;font-size:12.5px;box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 -1px 0 rgba(0,0,0,.35) inset,0 1px 2px rgba(0,0,0,.25),0 6px 18px -8px rgba(0,0,0,.55);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,filter .25s ease}
-.btn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 -1px 0 rgba(0,0,0,.4) inset,0 0 0 1px rgba(196,196,196,.45),0 8px 22px -8px rgba(0,0,0,.6)}
-.btn:active{transform:translateY(0)}
-.btn.ghost{background:rgba(255,255,255,.02);color:#fff;border:1px solid rgba(255,255,255,.18);box-shadow:none}
-.btn.ghost:hover{background:rgba(196,196,196,.06);border-color:rgba(196,196,196,.55);color:#D8D8D8;filter:none}
-.btn.danger{background:var(--crit);color:#fff;border:none}
-.btn.danger:hover{filter:brightness(1.08)}
-
-/* ── labels-mono com ● (assinatura do site) ── */
-.sec-title{font-family:"JetBrains Mono",Consolas,monospace;font-size:11px;letter-spacing:.16em;font-weight:600;color:#8A8A8A}
-.sec-title::before{content:"● ";color:#C4C4C4}
-.kpi .lab{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.14em;font-weight:600;font-size:10.5px;color:#8A8A8A}
-.kpi .val{font-family:"JetBrains Mono",Consolas,monospace;font-weight:700;font-variant-numeric:tabular-nums;font-size:28px;background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.kcol-head{font-family:"JetBrains Mono",Consolas,monospace;text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:#A8A8A8}
-.eyebrow{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.24em;font-weight:600}
+::-webkit-scrollbar-track{background:#E7E4DC}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#B5B2A8,#8F8C82);border-radius:0;border:1px solid #DEDBD2}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#3A3A3A,#101010)}
+.topbar{background:rgba(242,240,234,.88);backdrop-filter:blur(18px) saturate(130%);-webkit-backdrop-filter:blur(18px) saturate(130%);border-bottom:1px solid rgba(16,16,16,.14);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 10px 28px -18px rgba(20,18,12,.25)}
+.topbar .brand>span:last-child{text-transform:uppercase;letter-spacing:.16em;font-size:13px;font-weight:700;color:#101010}
+.topbar .bd{color:#101010}
+.pf-topbar{background:rgba(242,240,234,.9);backdrop-filter:blur(18px);border-bottom:1px solid rgba(16,16,16,.14);color:#101010}
+.nav{border-bottom:1px solid rgba(16,16,16,.16);padding-bottom:12px;margin-bottom:4px}
+.nav button{background:#EDEBE3;border:1px solid rgba(16,16,16,.15);border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600;font-family:"Montserrat",sans-serif;color:#5E5B54;filter:grayscale(1)}
+.nav button:hover{color:#101010;border-color:rgba(16,16,16,.3)}
+.nav button.active{background:linear-gradient(177deg,#3A3A3A 0%,#151515 70%,#000 100%);border-color:transparent;color:#F2F0EA}
+.panel,.kpi,.dir-card,.modal{background:#FBFAF6;border:1px solid rgba(16,16,16,.14);border-radius:2px;box-shadow:0 10px 28px -16px rgba(20,18,12,.16),inset 0 1px 0 rgba(255,255,255,.8)}
+.kcol{background:#ECEAE2;border:1px solid rgba(16,16,16,.14);border-radius:2px}
+.pcard{background:#FBFAF6;border:1px solid rgba(16,16,16,.16);border-radius:2px;box-shadow:0 2px 8px -3px rgba(20,18,12,.12);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease}
+.pcard:hover{transform:translateY(-2px);border-color:rgba(16,16,16,.32);box-shadow:0 16px 34px -14px rgba(20,18,12,.28)}
+.modal{box-shadow:0 30px 70px -24px rgba(20,18,12,.4),0 0 0 1px rgba(16,16,16,.06)}
+.modal-bg{background:rgba(24,22,18,.45);backdrop-filter:blur(6px)}
+.modal-head{border-bottom:1px solid rgba(16,16,16,.14)}
+.modal-foot{border-top:1px solid rgba(16,16,16,.14)}
+.toolbar{border-bottom:1px solid rgba(16,16,16,.12);padding-bottom:12px}
+.gate{background:radial-gradient(120% 90% at 50% -10%, #FFFFFF 0%, #F2F0EA 58%, #E9E6DE 100%) !important}
+.gate-card{background:rgba(251,250,246,.92);backdrop-filter:blur(14px);border:1px solid rgba(16,16,16,.15);border-radius:2px;box-shadow:0 26px 60px -26px rgba(20,18,12,.35),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden;position:relative}
+.gate-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 4%,rgba(16,16,16,.55) 35%,#8F7236 50%,rgba(16,16,16,.55) 65%,transparent 96%)}
+.brand-dot{color:#101010;filter:none}
+.gate-card h1{text-transform:uppercase;letter-spacing:.08em;font-size:21px;color:#101010}
+.eyebrow{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.24em;font-weight:700;color:#5E5B54}
 .gate-team-label{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.16em}
-
-/* ── controles: inset escuro, foco prata fino ── */
-input,select,textarea{background:#0d0d0d;border:1px solid rgba(255,255,255,.1);border-radius:2px;transition:border-color .2s ease,box-shadow .2s ease}
-input:focus,select:focus,textarea:focus{outline:none;border-color:transparent;box-shadow:0 0 0 1px rgba(196,196,196,.6),0 0 0 3px rgba(196,196,196,.14)}
-.seg{border-radius:2px;border-color:rgba(255,255,255,.14)}
-.seg button{text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;font-weight:600}
-
-/* ── tags/pills retos (linguagem sharp) ── */
-.pill,.chip,.tag,.badge-chip{border-radius:3px}
-
-/* ── headings: Montserrat caps tracking ── */
-h1,h2{letter-spacing:.02em}
-.gate-card h1{text-transform:uppercase;letter-spacing:.08em;font-size:21px}
-
-/* ── toast elevado ── */
-.toast{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),#111;border:1px solid rgba(255,255,255,.1);border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95)}
-/* ── hero do portfólio: piano black + platina (não a placa prata) ── */
-.pf-hero{background:radial-gradient(ellipse at top,#0d0d0d 0%,#050505 45%,#000 100%);border:1px solid rgba(255,255,255,.08);border-radius:2px;color:#F2F0EA;box-shadow:0 12px 32px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05)}
-.pf-hero .pf-badge{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.16);color:#C4C4C4;font-family:"JetBrains Mono",Consolas,monospace;font-weight:600;letter-spacing:.22em;border-radius:3px}
-.pf-hero h1{background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.01em}
-.pf-hero p{color:#A8A8A8;opacity:1}
-.pf-stat b{font-family:"JetBrains Mono",Consolas,monospace;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pf-stat span{color:#8A8A8A;opacity:1;font-family:"JetBrains Mono",Consolas,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
-/* ── KPI destaque: dark com anel prata (nao a placa clara) ── */
-.kpi.accent{background:radial-gradient(ellipse at top,#141414 0%,#0a0a0a 60%,#050505 100%);border:1px solid rgba(196,196,196,.35);box-shadow:0 0 0 1px rgba(196,196,196,.12),0 14px 36px -16px rgba(0,0,0,.9),0 0 40px -18px rgba(255,255,255,.08),inset 0 1px 0 rgba(255,255,255,.06)}
+.btn{background:linear-gradient(177deg,#3A3A3A 0%,#161616 60%,#000 100%);color:#F2F0EA;border:none;border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-family:"Montserrat",sans-serif;font-weight:700;font-size:12.5px;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 -1px 0 rgba(0,0,0,.6) inset,0 2px 6px rgba(20,18,12,.25),0 8px 20px -10px rgba(20,18,12,.5);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,filter .25s ease;filter:grayscale(1)}
+.btn:hover{transform:translateY(-1px);filter:grayscale(1) brightness(1.15);box-shadow:0 0 0 1px rgba(16,16,16,.35),0 10px 24px -10px rgba(20,18,12,.55)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:transparent;color:#101010;border:1px solid rgba(16,16,16,.3);box-shadow:none}
+.btn.ghost:hover{background:rgba(16,16,16,.05);border-color:rgba(16,16,16,.55);color:#000;filter:grayscale(1)}
+.btn.danger{background:var(--crit);color:#fff;border:none;filter:none}
+.sec-title{font-family:"JetBrains Mono",Consolas,monospace;font-size:11px;letter-spacing:.16em;font-weight:700;color:#6E6B63;border-bottom:1px solid rgba(16,16,16,.16);padding-bottom:8px;margin-bottom:14px}
+.sec-title::before{content:"\25CF  ";color:#101010}
+.kpi .lab{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.14em;font-weight:700;font-size:10.5px;color:#6E6B63}
+.kpi .val{font-family:"JetBrains Mono",Consolas,monospace;font-weight:700;font-variant-numeric:tabular-nums;font-size:28px;color:#101010;background:none;-webkit-text-fill-color:#101010}
+.kpi{border-bottom:2px solid rgba(16,16,16,.3)}
+.kcol-head{font-family:"JetBrains Mono",Consolas,monospace;text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:#5E5B54;border-bottom:1px solid rgba(16,16,16,.16);padding-bottom:8px;margin-bottom:12px}
+.kpi.accent{background:radial-gradient(ellipse at top,#1A1A1A 0%,#0a0a0a 60%,#000 100%);border:1px solid rgba(16,16,16,.6);box-shadow:0 18px 40px -18px rgba(20,18,12,.5)}
 .kpi.accent .lab{color:#C4C4C4}
 .kpi.accent .sub{color:#8A8A8A}
-.kpi.accent .val{background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-/* ── emojis do chrome em monocromo (linguagem premium) ── */
-.nav button,.bell,.btn:not(.danger),.seg button,.rolePill,#rolePill{filter:grayscale(1)}
-.nav button.active{filter:grayscale(1)}
-/* chips neutros do dash */
-.badge-chip{border-radius:3px}
-/* ── contraste: linhas de separacao ── */
-.nav{border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:12px;margin-bottom:4px}
-.sec-title{border-bottom:1px solid rgba(196,196,196,.16);padding-bottom:8px;margin-bottom:14px}
-.kcol-head{border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:8px;margin-bottom:12px}
-.modal-head{border-bottom:1px solid rgba(255,255,255,.14)}
-.modal-foot{border-top:1px solid rgba(255,255,255,.14)}
-.toolbar{border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:12px}
-.kpi{border-bottom:2px solid rgba(196,196,196,.22)}
-.tbl th{border-bottom:1px solid rgba(255,255,255,.18)}
-.tbl td{border-bottom:1px solid rgba(255,255,255,.09)}
+.kpi.accent .val{color:#F2F0EA;-webkit-text-fill-color:#F2F0EA}
+input,select,textarea{background:#EDEBE3;border:1px solid rgba(16,16,16,.18);border-radius:2px;color:#101010;transition:border-color .2s ease,box-shadow .2s ease}
+input::placeholder,textarea::placeholder{color:#8F8C82}
+input:focus,select:focus,textarea:focus{outline:none;border-color:transparent;box-shadow:0 0 0 1px rgba(16,16,16,.6),0 0 0 3px rgba(16,16,16,.12)}
+.seg{border-radius:2px;border-color:rgba(16,16,16,.25)}
+.seg button{text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;font-weight:600}
+.pill,.chip,.tag,.badge-chip{border-radius:3px}
+.tbl th{border-bottom:1px solid rgba(16,16,16,.28)}
+.tbl td{border-bottom:1px solid rgba(16,16,16,.1)}
+h1,h2{letter-spacing:.02em}
+.bell{filter:grayscale(1)}
+.toast{background:#101010;border:1px solid rgba(16,16,16,.4);border-radius:2px;color:#F2F0EA;box-shadow:0 24px 60px -24px rgba(20,18,12,.6)}
+.pf-hero{background:radial-gradient(ellipse at top,#161616 0%,#0a0a0a 55%,#000 100%);border:1px solid rgba(16,16,16,.5);border-radius:2px;color:#F2F0EA;box-shadow:0 22px 50px -22px rgba(20,18,12,.55)}
+.pf-hero .pf-badge{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);color:#C4C4C4;font-family:"JetBrains Mono",Consolas,monospace;font-weight:600;letter-spacing:.22em;border-radius:3px}
+.pf-hero h1{color:#F2F0EA;letter-spacing:.01em}
+.pf-hero p{color:#A8A8A8;opacity:1}
+.pf-stat b{font-family:"JetBrains Mono",Consolas,monospace;font-variant-numeric:tabular-nums;color:#F2F0EA}
+.pf-stat span{color:#8A8A8A;opacity:1;font-family:"JetBrains Mono",Consolas,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
 </style>
 </head>
 <body>
