@@ -220,7 +220,7 @@ body.membro .hide-membro{display:none !important}
 /* ═══════════ HUB FINANCE — skin premium (design system do site) ═══════════ */
 :root{
   --bg:#000000; --panel:#0a0a0a; --panel-2:#0d0d0d;
-  --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.14);
+  --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.22);
   --radius:2px;
   --shadow:0 12px 32px -16px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.05);
 }
@@ -242,18 +242,18 @@ body{
 .pf-topbar{background:rgba(0,0,0,.72);backdrop-filter:blur(20px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.06)}
 
 /* ── navegação: abas retas, caps, tracking ── */
-.nav button{background:transparent;border:1px solid transparent;border-radius:2px 2px 0 0;text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600;font-family:"Montserrat",sans-serif}
+.nav button{background:#0c0c0c;border:1px solid rgba(255,255,255,.12);border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600;font-family:"Montserrat",sans-serif}
 .nav button:hover{color:#F2F0EA;border-color:rgba(255,255,255,.1)}
-.nav button.active{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),#0a0a0a;border-color:rgba(255,255,255,.12);border-bottom:none;color:#F2F0EA}
+.nav button.active{background:linear-gradient(177deg,#E8E8E8 0%,#B5B5B5 60%,#8A8A8A 100%);border-color:transparent;color:#101010;filter:none}
 
 /* ── superfícies premium: luz interna no topo + anel-sussurro ── */
 .panel,.kpi,.dir-card,.modal{
   background:linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(255,255,255,0) 55%),#0a0a0a;
-  border:1px solid rgba(255,255,255,.07);border-radius:2px;
+  border:1px solid rgba(255,255,255,.13);border-radius:2px;
   box-shadow:0 12px 32px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);
 }
-.kcol{background:#070707;border:1px solid rgba(255,255,255,.06);border-radius:2px}
-.pcard{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 60%),#0d0d0d;border:1px solid rgba(255,255,255,.08);border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease}
+.kcol{background:#070707;border:1px solid rgba(255,255,255,.12);border-radius:2px}
+.pcard{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 60%),#0d0d0d;border:1px solid rgba(255,255,255,.14);border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease}
 .pcard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16);box-shadow:0 20px 44px -18px rgba(0,0,0,.9),0 0 34px -16px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.05)}
 .gate-card{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 55%),rgba(10,10,10,.9);border:1px solid rgba(255,255,255,.08);border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.04)}
 .gate-card::before{height:2px;background:linear-gradient(90deg,transparent 4%,rgba(196,196,196,.7) 35%,rgba(236,215,158,.95) 50%,rgba(196,196,196,.7) 65%,transparent 96%);box-shadow:0 0 12px -1px rgba(196,196,196,.4)}
@@ -310,6 +310,16 @@ h1,h2{letter-spacing:.02em}
 .nav button.active{filter:grayscale(1)}
 /* chips neutros do dash */
 .badge-chip{border-radius:3px}
+/* ── contraste: linhas de separacao ── */
+.nav{border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:12px;margin-bottom:4px}
+.sec-title{border-bottom:1px solid rgba(196,196,196,.16);padding-bottom:8px;margin-bottom:14px}
+.kcol-head{border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:8px;margin-bottom:12px}
+.modal-head{border-bottom:1px solid rgba(255,255,255,.14)}
+.modal-foot{border-top:1px solid rgba(255,255,255,.14)}
+.toolbar{border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:12px}
+.kpi{border-bottom:2px solid rgba(196,196,196,.22)}
+.tbl th{border-bottom:1px solid rgba(255,255,255,.18)}
+.tbl td{border-bottom:1px solid rgba(255,255,255,.09)}
 </style>
 </head>
 <body>
