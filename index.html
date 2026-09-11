@@ -4,7 +4,8 @@
 <script>
 /* Endereco oficial: ligahubfinance.com.br/pipeline — o github.io vira espelho e redireciona */
 if (location.hostname === 'riksonmiguellz.github.io') {
-  location.replace('https://ligahubfinance.com.br/pipeline/');
+  // Preserva query e hash — o link de recuperação de senha do Supabase vem no hash
+  location.replace('https://ligahubfinance.com.br/pipeline/' + location.search + location.hash);
 }
 </script>
 <meta charset="utf-8">
@@ -332,6 +333,7 @@ h1,h2{letter-spacing:.02em}
       </div>
     </div>
     <div class="err" id="gateErr"></div>
+    <button class="link" id="forgotBtn" style="margin-top:8px">Esqueci minha senha</button>
     <button class="link" id="btnPortfolioPub" style="margin-top:14px;font-weight:650;color:var(--brand)">🌐 Ver portfólio público da Liga</button>
     <div id="gateTeam" class="gate-team"></div>
   </div>
@@ -445,6 +447,7 @@ async function ensureSB(){if(sb)return sb;if(!window.supabase){await new Promise
 const Store={
   async init(){
     await ensureSB();
+    sb.auth.onAuthStateChange((ev)=>{if(ev==="PASSWORD_RECOVERY")showRecoveryModal();});
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
     await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
@@ -508,6 +511,36 @@ const projAtivo=p=>p.status!=="Concluído"&&p.status!=="Cancelado";
 const tarefaAtrasada=t=>t.prazo&&t.status!=="concluida"&&t.prazo<todayISO();
 
 /* ---------- auth ---------- */
+$("#forgotBtn").onclick=async()=>{
+  const email=($("#email").value||"").trim().toLowerCase();const err=$("#gateErr");err.style.color="";
+  if(!email){err.textContent="Digite seu e-mail no campo acima e clique de novo.";$("#email").focus();return;}
+  const b=$("#forgotBtn");b.disabled=true;b.textContent="Enviando...";
+  try{await ensureSB();const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:"https://ligahubfinance.com.br/pipeline/"});if(error)throw error;
+    err.style.color="var(--ok, #3FBF6F)";err.textContent="Link enviado! Confira seu e-mail (e o Spam) — vale por 1 hora.";}
+  catch(e){err.textContent="Não foi possível enviar: "+(e.message||"tente de novo");}
+  finally{b.disabled=false;b.textContent="Esqueci minha senha";}
+};
+/* Chegou pelo link de recuperação do e-mail → modal de nova senha */
+function showRecoveryModal(){
+  const m=document.createElement("div");m.className="modal-wrap";
+  m.innerHTML=`<div class="modal" style="max-width:420px"><div class="modal-head"><h2>🔑 Criar nova senha</h2></div><div class="modal-body">
+    <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input id="rc-a" type="password" autocomplete="new-password" placeholder="Nova senha"></div>
+    <div class="field"><label>Repita a nova senha</label><input id="rc-b" type="password" autocomplete="new-password" placeholder="Repita a senha"></div>
+    <div class="err" id="rc-err"></div>
+  </div><div class="modal-foot"><button class="btn" id="rc-go">Salvar e entrar</button></div></div>`;
+  ($("#modalMount")||document.body).appendChild(m);
+  $("#rc-go").onclick=async()=>{
+    const a=$("#rc-a").value,b=$("#rc-b").value;$("#rc-err").textContent="";
+    if(a.length<6){$("#rc-err").textContent="A senha precisa ter ao menos 6 caracteres.";return;}
+    if(a!==b){$("#rc-err").textContent="As senhas não conferem.";return;}
+    const btn=$("#rc-go");btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+    try{await ensureSB();const {error}=await sb.auth.updateUser({password:a});if(error)throw error;
+      m.remove();toast("Senha alterada! Entre com a nova senha.");
+      try{await sb.auth.signOut();}catch(e){}
+      history.replaceState(null,"",location.pathname);}
+    catch(e){btn.disabled=false;btn.textContent="Salvar e entrar";$("#rc-err").textContent="Erro: "+(e.message||"não foi possível alterar");}
+  };
+}
 $("#pwGo").onclick=doLogin;$("#pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});$("#email").addEventListener("keydown",e=>{if(e.key==="Enter")$("#pw").focus();});
 async function doLogin(){const b=$("#pwGo");b.disabled=true;b.textContent="Entrando...";$("#gateErr").textContent="";try{const r=await Store.login($("#email").value,$("#pw").value);enter(r.role,r.nome);}catch(e){$("#gateErr").textContent=e.message||"Falha ao entrar.";$("#pw").select();}finally{b.disabled=false;b.textContent="Entrar";}}
 $("#btnPortfolioPub").onclick=()=>openPortfolioPublic();
