@@ -359,6 +359,7 @@ h1,h2{letter-spacing:.02em}
     <button data-v="calendario">🗓️ Calendário</button>
     <button data-v="mural">📣 Mural</button>
     <button data-v="aprovacoes">✔️ Aprovações</button>
+    <button data-v="publicacoes" class="hide-membro">📰 Site</button>
     <button data-v="onboarding" class="hide-membro">🎯 Onboarding</button>
     <button data-v="estrutura">🏛️ Estrutura</button>
     <button data-v="ranking">🏆 Ranking</button>
@@ -379,6 +380,7 @@ h1,h2{letter-spacing:.02em}
     <div class="view" id="v-calendario"></div>
     <div class="view" id="v-mural"></div>
     <div class="view" id="v-aprovacoes"></div>
+    <div class="view" id="v-publicacoes"></div>
     <div class="view hide-membro" id="v-onboarding"></div>
     <div class="view" id="v-estrutura"></div>
     <div class="view" id="v-ranking"></div>
@@ -572,7 +574,7 @@ function switchView(v){VIEW=v;$("#nav").querySelectorAll("button").forEach(b=>b.
 {const bnp=$("#btnNovoProj");if(bnp)bnp.onclick=()=>projModal(null);}
 $("#bellBtn").onclick=()=>notifModal();
 
-function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();else if(VIEW==="ranking")renderRanking();else if(VIEW==="avaliacao")renderAvaliacao();else if(VIEW==="portfolio")renderPortfolio();renderGateTeam();}
+function render(){renderBell();if(VIEW==="dashboard")renderDash();else if(VIEW==="projetos")renderProjetos();else if(VIEW==="tarefas")renderTarefas();else if(VIEW==="pessoas")renderPessoas();else if(VIEW==="estrutura")renderEstrutura();else if(VIEW==="crm")renderCRM();else if(VIEW==="ideias")renderIdeias();else if(VIEW==="reunioes")renderReunioes();else if(VIEW==="mural")renderMural();else if(VIEW==="aprovacoes")renderAprov();else if(VIEW==="publicacoes")renderPublicacoes();else if(VIEW==="onboarding")renderOnboarding();else if(VIEW==="eventos")renderEventos();else if(VIEW==="calendario")renderCalendario();else if(VIEW==="executivo")renderExecutivo();else if(VIEW==="financeiro")renderFinanceiro();else if(VIEW==="ranking")renderRanking();else if(VIEW==="avaliacao")renderAvaliacao();else if(VIEW==="portfolio")renderPortfolio();renderGateTeam();}
 
 /* ---------- DASHBOARD ---------- */
 function renderDash(){
@@ -1420,6 +1422,143 @@ window.BGFX=(function(){const canvas=$("#bgfx");if(!canvas)return {start(){},sto
 })();
 
 /* ---------- boot ---------- */
+/* ---------- PUBLICAÇÕES DO SITE (blog / projetos / eventos) ----------
+   Alimenta as sessões públicas do site. Regra imutável (travada no banco):
+   quem posta NÃO aprova — outra pessoa da direção precisa aprovar. */
+let PUBS=[],PUB_FTIPO="todas",PUB_FST="fluxo",EU_EMAIL="";
+const PUB_TIPOS={blog:"📝 Blog",projeto:"🚀 Projeto",evento:"🎤 Evento"};
+const PUB_ST={rascunho:["Rascunho","#8A8578"],pendente:["Aguardando aprovação","#B08A2E"],aprovado:["✔ Publicado no site","#2E7D4F"],rejeitado:["Rejeitado","#B0432E"],arquivado:["Arquivado","#888"]};
+async function euEmail(){if(EU_EMAIL)return EU_EMAIL;try{await ensureSB();const {data:{user}}=await sb.auth.getUser();EU_EMAIL=((user&&user.email)||"").toLowerCase();}catch(e){}return EU_EMAIL;}
+async function loadPubs(){await ensureSB();const {data,error}=await sb.from("liga_publicacoes").select("*").order("criado_em",{ascending:false});if(error)throw error;PUBS=data||[];}
+async function renderPublicacoes(){
+  const el=$("#v-publicacoes");
+  el.innerHTML=`<div class="toolbar"><div style="flex:1;font-size:13px;color:var(--ink-soft)">Tudo que aparece em <b>Blog</b>, <b>Projetos</b> e <b>Eventos</b> do site nasce aqui. <b>Quem posta não aprova</b> — outra pessoa da direção libera.</div><button class="btn sm" onclick="pubModal(null)">+ Nova publicação</button></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px" id="pubChips"></div><div id="pubBody"><div class="empty">Carregando…</div></div>`;
+  try{await loadPubs();await euEmail();}catch(e){$("#pubBody").innerHTML=`<div class="empty">Erro ao carregar: ${esc(e.message||"")}</div>`;return;}
+  drawPubChips();drawPubBody();
+}
+function drawPubChips(){
+  const t=[["todas","Todas"],["blog","📝 Blog"],["projeto","🚀 Projetos"],["evento","🎤 Eventos"]];
+  const s=[["fluxo","Em fluxo"],["aprovado","Publicadas"],["todas","Tudo"]];
+  $("#pubChips").innerHTML=t.map(([v,l])=>`<button class="btn sm ${PUB_FTIPO===v?"":"ghost"}" data-pt="${v}">${l}</button>`).join("")
+    +`<span style="width:14px"></span>`+s.map(([v,l])=>`<button class="btn sm ${PUB_FST===v?"":"ghost"}" data-ps="${v}">${l}</button>`).join("");
+  $("#pubChips").querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{PUB_FTIPO=b.dataset.pt;drawPubChips();drawPubBody();});
+  $("#pubChips").querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{PUB_FST=b.dataset.ps;drawPubChips();drawPubBody();});
+}
+function pubFiltradas(){
+  return PUBS.filter(p=>(PUB_FTIPO==="todas"||p.tipo===PUB_FTIPO))
+    .filter(p=>PUB_FST==="todas"?true:PUB_FST==="aprovado"?p.status==="aprovado":(p.status==="rascunho"||p.status==="pendente"||p.status==="rejeitado"));
+}
+function pubCard(p){
+  const [stl,stc]=PUB_ST[p.status]||["?","#888"];
+  const minha=EU_EMAIL&&p.autor_email&&EU_EMAIL===String(p.autor_email).toLowerCase();
+  const acts=[];
+  if(p.status==="rascunho"||p.status==="rejeitado")acts.push(`<button class="btn sm" data-pact="enviar" data-pid="${p.id}">Enviar p/ aprovação</button>`);
+  if(p.status==="pendente"){
+    if(minha)acts.push(`<span style="font-size:12px;color:var(--ink-soft)">⏳ aguardando outra pessoa da direção aprovar</span>`);
+    else{acts.push(`<button class="btn sm" data-pact="aprovar" data-pid="${p.id}">✔ Aprovar e publicar</button>`);acts.push(`<button class="btn sm ghost" data-pact="rejeitar" data-pid="${p.id}">Rejeitar</button>`);}
+  }
+  if(p.status==="aprovado")acts.push(`<button class="btn sm ghost" data-pact="arquivar" data-pid="${p.id}">Tirar do ar</button>`);
+  acts.push(`<button class="link" data-pact="editar" data-pid="${p.id}">editar</button>`);
+  acts.push(`<button class="link" style="color:var(--crit)" data-pact="excluir" data-pid="${p.id}">excluir</button>`);
+  const capa=p.capa_url?`<img src="${esc(p.capa_url)}" style="width:86px;height:60px;object-fit:cover;border:1px solid var(--line);flex-shrink:0" alt="">`:"";
+  const anexos=(Array.isArray(p.anexos)?p.anexos:[]).length;
+  return `<div class="panel" style="margin-bottom:12px"><div style="display:flex;gap:14px;align-items:flex-start">${capa}<div style="flex:1;min-width:0">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:4px">
+      <span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)">${PUB_TIPOS[p.tipo]||p.tipo}</span>
+      <span style="font-size:11.5px;font-weight:650;color:${stc};border:1px solid ${stc};padding:1px 8px;border-radius:99px">${stl}</span>
+    </div>
+    <h3 style="font-size:16px;margin:2px 0">${esc(p.titulo)}</h3>
+    <div style="font-size:12px;color:var(--ink-soft)">por ${esc(p.autor_nome||p.autor_email||"—")}${p.aprovador_email?` · aprovado por ${esc(p.aprovador_nome||p.aprovador_email)}`:""} · ${p.criado_em?new Date(p.criado_em).toLocaleDateString("pt-BR"):""}${anexos?` · 📎 ${anexos} anexo${anexos>1?"s":""}`:""}</div>
+    ${p.resumo?`<div style="font-size:13.5px;color:var(--ink-soft);margin-top:6px">${esc(p.resumo)}</div>`:""}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">${acts.join("")}</div>
+  </div></div></div>`;
+}
+function drawPubBody(){
+  const rows=pubFiltradas();
+  $("#pubBody").innerHTML=rows.map(pubCard).join("")||`<div class="empty">Nada aqui ainda. Clique em <b>+ Nova publicação</b> pra criar o primeiro conteúdo do site.</div>`;
+  $("#pubBody").querySelectorAll("[data-pact]").forEach(b=>b.onclick=()=>pubAcao(b.dataset.pact,b.dataset.pid,b));
+}
+async function pubAcao(act,id,btn){
+  const p=PUBS.find(x=>x.id===id);if(!p)return;
+  if(act==="editar")return pubModal(id);
+  if(act==="excluir"){if(!confirm(`Excluir "${p.titulo}"? Se estiver no ar, sai do site.`))return;}
+  if(act==="rejeitar"){const motivo=prompt("Motivo da rejeição (o autor vê):","");if(motivo===null)return;p.meta=Object.assign({},p.meta,{motivo_rejeicao:motivo});}
+  if(btn){btn.disabled=true;btn.textContent="…";}
+  try{
+    await ensureSB();
+    if(act==="excluir"){const {error}=await sb.from("liga_publicacoes").delete().eq("id",id);if(error)throw error;toast("Excluída");}
+    else{
+      const patch={meta:p.meta};
+      if(act==="enviar")patch.status="pendente";
+      if(act==="aprovar"){patch.status="aprovado";patch.aprovador_nome=EU||"";}
+      if(act==="rejeitar")patch.status="rejeitado";
+      if(act==="arquivar")patch.status="arquivado";
+      const {error}=await sb.from("liga_publicacoes").update(patch).eq("id",id);if(error)throw error;
+      toast(act==="aprovar"?"Publicado no site ✔":act==="enviar"?"Enviado pra aprovação":act==="rejeitar"?"Rejeitado":"Fora do ar");
+    }
+    await loadPubs();drawPubBody();
+  }catch(e){toast((e.message||"Erro").includes("Quem posta")?"Quem posta não aprova — peça a outra pessoa da direção.":"Erro: "+(e.message||""),true);await loadPubs().catch(()=>{});drawPubBody();}
+}
+async function pubUpload(file,prefix){
+  await ensureSB();
+  const safe=file.name.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
+  const path=`${prefix}/${Date.now()}_${safe}`;
+  const {error}=await sb.storage.from("liga-publicacoes").upload(path,file,{upsert:false});
+  if(error)throw error;
+  return sb.storage.from("liga-publicacoes").getPublicUrl(path).data.publicUrl;
+}
+window.pubModal=function(id){
+  const editing=!!id;const p=editing?Object.assign({},PUBS.find(x=>x.id===id)):{tipo:"blog",titulo:"",resumo:"",conteudo:"",capa_url:"",anexos:[],meta:{},status:"rascunho"};
+  p.meta=p.meta||{};p.anexos=Array.isArray(p.anexos)?p.anexos.slice():[];
+  const m=document.createElement("div");m.className="modal-bg";
+  const metaFields=t=>t==="evento"
+    ?`<div class="field"><label>Data e hora do evento</label><input id="pb-mdata" type="datetime-local" value="${esc(p.meta.data_evento||"")}"></div>
+      <div class="field"><label>Local</label><input id="pb-mlocal" value="${esc(p.meta.local||"")}" placeholder="Auditório HUB / Online"></div>
+      <div class="field"><label>Link de inscrição (opcional)</label><input id="pb-mlink" value="${esc(p.meta.link_inscricao||"")}" placeholder="https://..."></div>`
+    :t==="projeto"
+    ?`<div class="field"><label>Área / Diretoria</label><input id="pb-marea" value="${esc(p.meta.area||"")}" placeholder="Ex.: Research, Quant, Marketing"></div>
+      <div class="field"><label>Status do projeto</label><select id="pb-mst"><option${(p.meta.status_projeto||"")==="Em andamento"?" selected":""}>Em andamento</option><option${(p.meta.status_projeto||"")==="Concluído"?" selected":""}>Concluído</option><option${(p.meta.status_projeto||"")==="Contínuo"?" selected":""}>Contínuo</option></select></div>`
+    :"";
+  m.innerHTML=`<div class="modal" style="max-width:680px"><div class="modal-head"><h2>${editing?"Editar publicação":"📰 Nova publicação do site"}</h2><button class="close-x" data-x>×</button></div><div class="modal-body">
+    <div class="field"><label>Onde entra no site?</label><select id="pb-tipo"${editing?" disabled":""}><option value="blog"${p.tipo==="blog"?" selected":""}>📝 Blog</option><option value="projeto"${p.tipo==="projeto"?" selected":""}>🚀 Projetos</option><option value="evento"${p.tipo==="evento"?" selected":""}>🎤 Eventos</option></select></div>
+    <div class="field"><label>Título</label><input id="pb-tit" value="${esc(p.titulo)}" placeholder="Título como vai aparecer no site"></div>
+    <div class="field"><label>Resumo (aparece no card do site)</label><textarea id="pb-res" rows="2" placeholder="1-2 frases">${esc(p.resumo||"")}</textarea></div>
+    <div class="field"><label>Conteúdo completo</label><textarea id="pb-cont" rows="8" placeholder="Texto do post. Parágrafos separados por linha em branco.">${esc(p.conteudo||"")}</textarea></div>
+    <div id="pb-meta">${metaFields(p.tipo)}</div>
+    <div class="field"><label>Capa (imagem)</label><input id="pb-capa" type="file" accept="image/*">${p.capa_url?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px">✔ capa atual mantida se não escolher outra</div>`:""}</div>
+    <div class="field"><label>Anexos (PDF, imagens, docs)</label><input id="pb-anx" type="file" multiple>${p.anexos.length?`<div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${p.anexos.map(a=>`📎 ${esc(a.nome)}`).join(" · ")}</div>`:""}</div>
+    <div class="err" id="pb-err"></div>
+  </div><div class="modal-foot"><button class="btn ghost" data-x>Cancelar</button><button class="btn ghost" id="pb-rasc">Salvar rascunho</button><button class="btn" id="pb-env">Enviar p/ aprovação</button></div></div>`;
+  $("#modalMount").appendChild(m);
+  m.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>m.remove());m.onclick=e=>{if(e.target===m)m.remove();};
+  $("#pb-tipo").onchange=()=>{$("#pb-meta").innerHTML=metaFields($("#pb-tipo").value);};
+  const salvar=async(status,btn)=>{
+    const tit=$("#pb-tit").value.trim();if(!tit){$("#pb-err").textContent="Dá um título.";return;}
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>';$("#pb-err").textContent="";
+    try{
+      await ensureSB();await euEmail();
+      const tipo=$("#pb-tipo").value;
+      const meta=Object.assign({},p.meta);
+      if(tipo==="evento"){meta.data_evento=$("#pb-mdata")?$("#pb-mdata").value:meta.data_evento;meta.local=$("#pb-mlocal")?$("#pb-mlocal").value.trim():meta.local;meta.link_inscricao=$("#pb-mlink")?$("#pb-mlink").value.trim():meta.link_inscricao;}
+      if(tipo==="projeto"){meta.area=$("#pb-marea")?$("#pb-marea").value.trim():meta.area;meta.status_projeto=$("#pb-mst")?$("#pb-mst").value:meta.status_projeto;}
+      let capa=p.capa_url||"";const fCapa=$("#pb-capa").files[0];
+      if(fCapa)capa=await pubUpload(fCapa,"capas");
+      const anexos=p.anexos.slice();
+      for(const f of Array.from($("#pb-anx").files)){const url=await pubUpload(f,"anexos");anexos.push({nome:f.name,url,tipo:f.type||""});}
+      const row={tipo,titulo:tit,resumo:$("#pb-res").value.trim(),conteudo:$("#pb-cont").value,capa_url:capa,anexos,meta,status,autor_email:EU_EMAIL,autor_nome:EU||""};
+      let error;
+      if(editing)({error}=await sb.from("liga_publicacoes").update(row).eq("id",p.id));
+      else ({error}=await sb.from("liga_publicacoes").insert(row));
+      if(error)throw error;
+      m.remove();toast(status==="pendente"?"Enviado! Outra pessoa da direção precisa aprovar.":"Rascunho salvo");
+      await loadPubs();drawPubBody();
+    }catch(e){btn.disabled=false;btn.textContent=status==="pendente"?"Enviar p/ aprovação":"Salvar rascunho";$("#pb-err").textContent="Erro: "+(e.message||"não foi possível salvar");}
+  };
+  $("#pb-rasc").onclick=()=>salvar("rascunho",$("#pb-rasc"));
+  $("#pb-env").onclick=()=>salvar("pendente",$("#pb-env"));
+};
+
 (async function(){try{window.BGFX.start();}catch(e){}try{await Store.init();}catch(e){$("#gateErr").textContent="Aviso: "+(e.message||"falha ao conectar");}renderGateTeam();})();
 </script>
 </body>
