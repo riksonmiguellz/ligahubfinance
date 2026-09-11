@@ -216,6 +216,91 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-o
 body.membro .hide-membro{display:none !important}
 @media(max-width:680px){.field-row,.field-row.three{grid-template-columns:1fr}.wrap{padding:14px 12px 70px}.nav{padding:8px 12px 0}}
 </style>
+<style id="hf-skin">
+/* ═══════════ HUB FINANCE — skin premium (design system do site) ═══════════ */
+:root{
+  --bg:#000000; --panel:#0a0a0a; --panel-2:#0d0d0d;
+  --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.14);
+  --radius:2px;
+  --shadow:0 12px 32px -16px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.05);
+}
+/* piano black com brilho radial fixo — assinatura do site */
+body{
+  background:#000;
+  background-image:radial-gradient(ellipse 1200px 600px at 50% -10%,rgba(255,255,255,.04),transparent 60%),radial-gradient(ellipse 800px 400px at 100% 100%,rgba(255,255,255,.025),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:#C4C4C4;color:#0a0a0a}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#000}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2A2A2A,#101010);border-radius:0;border:1px solid #0a0a0a}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#C4C4C4,#7A7A7A)}
+
+/* ── topo: glass nav ── */
+.topbar{background:rgba(0,0,0,.72);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.06);box-shadow:0 1px 0 rgba(255,255,255,.02) inset,0 8px 32px -8px rgba(0,0,0,.8)}
+.topbar .brand>span:last-child{text-transform:uppercase;letter-spacing:.16em;font-size:13px;font-weight:600;color:#F2F0EA}
+.pf-topbar{background:rgba(0,0,0,.72);backdrop-filter:blur(20px) saturate(140%);border-bottom:1px solid rgba(255,255,255,.06)}
+
+/* ── navegação: abas retas, caps, tracking ── */
+.nav button{background:transparent;border:1px solid transparent;border-radius:2px 2px 0 0;text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:600;font-family:"Montserrat",sans-serif}
+.nav button:hover{color:#F2F0EA;border-color:rgba(255,255,255,.1)}
+.nav button.active{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),#0a0a0a;border-color:rgba(255,255,255,.12);border-bottom:none;color:#F2F0EA}
+
+/* ── superfícies premium: luz interna no topo + anel-sussurro ── */
+.panel,.kpi,.dir-card,.modal{
+  background:linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(255,255,255,0) 55%),#0a0a0a;
+  border:1px solid rgba(255,255,255,.07);border-radius:2px;
+  box-shadow:0 12px 32px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.kcol{background:#070707;border:1px solid rgba(255,255,255,.06);border-radius:2px}
+.pcard{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 60%),#0d0d0d;border:1px solid rgba(255,255,255,.08);border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,border-color .3s ease}
+.pcard:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16);box-shadow:0 20px 44px -18px rgba(0,0,0,.9),0 0 34px -16px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.05)}
+.gate-card{background:linear-gradient(180deg,rgba(255,255,255,.025) 0%,rgba(255,255,255,0) 55%),rgba(10,10,10,.9);border:1px solid rgba(255,255,255,.08);border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.04)}
+.gate-card::before{height:2px;background:linear-gradient(90deg,transparent 4%,rgba(196,196,196,.7) 35%,rgba(236,215,158,.95) 50%,rgba(196,196,196,.7) 65%,transparent 96%);box-shadow:0 0 12px -1px rgba(196,196,196,.4)}
+.modal{border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95),0 4px 16px -4px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04)}
+.modal-bg{background:rgba(0,0,0,.72);backdrop-filter:blur(8px)}
+
+/* ── CTA metálico (assinatura do site) ── */
+.btn{background:linear-gradient(177deg,#E8E8E8 0%,#B5B5B5 42%,#8A8A8A 78%,#7A7A7A 100%);color:#101010;border:none;border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-family:"Montserrat",sans-serif;font-weight:700;font-size:12.5px;box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 -1px 0 rgba(0,0,0,.35) inset,0 1px 2px rgba(0,0,0,.25),0 6px 18px -8px rgba(0,0,0,.55);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,filter .25s ease}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.05);box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 -1px 0 rgba(0,0,0,.4) inset,0 0 0 1px rgba(196,196,196,.45),0 8px 22px -8px rgba(0,0,0,.6)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:rgba(255,255,255,.02);color:#fff;border:1px solid rgba(255,255,255,.18);box-shadow:none}
+.btn.ghost:hover{background:rgba(196,196,196,.06);border-color:rgba(196,196,196,.55);color:#D8D8D8;filter:none}
+.btn.danger{background:var(--crit);color:#fff;border:none}
+.btn.danger:hover{filter:brightness(1.08)}
+
+/* ── labels-mono com ● (assinatura do site) ── */
+.sec-title{font-family:"JetBrains Mono",Consolas,monospace;font-size:11px;letter-spacing:.16em;font-weight:600;color:#8A8A8A}
+.sec-title::before{content:"● ";color:#C4C4C4}
+.kpi .lab{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.14em;font-weight:600;font-size:10.5px;color:#8A8A8A}
+.kpi .val{font-family:"JetBrains Mono",Consolas,monospace;font-weight:700;font-variant-numeric:tabular-nums;font-size:28px;background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kcol-head{font-family:"JetBrains Mono",Consolas,monospace;text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:#A8A8A8}
+.eyebrow{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.24em;font-weight:600}
+.gate-team-label{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.16em}
+
+/* ── controles: inset escuro, foco prata fino ── */
+input,select,textarea{background:#0d0d0d;border:1px solid rgba(255,255,255,.1);border-radius:2px;transition:border-color .2s ease,box-shadow .2s ease}
+input:focus,select:focus,textarea:focus{outline:none;border-color:transparent;box-shadow:0 0 0 1px rgba(196,196,196,.6),0 0 0 3px rgba(196,196,196,.14)}
+.seg{border-radius:2px;border-color:rgba(255,255,255,.14)}
+.seg button{text-transform:uppercase;letter-spacing:.06em;font-size:11.5px;font-weight:600}
+
+/* ── tags/pills retos (linguagem sharp) ── */
+.pill,.chip,.tag,.badge-chip{border-radius:3px}
+
+/* ── headings: Montserrat caps tracking ── */
+h1,h2{letter-spacing:.02em}
+.gate-card h1{text-transform:uppercase;letter-spacing:.08em;font-size:21px}
+
+/* ── toast elevado ── */
+.toast{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),#111;border:1px solid rgba(255,255,255,.1);border-radius:2px;box-shadow:0 24px 60px -28px rgba(0,0,0,.95)}
+/* ── hero do portfólio: piano black + platina (não a placa prata) ── */
+.pf-hero{background:radial-gradient(ellipse at top,#0d0d0d 0%,#050505 45%,#000 100%);border:1px solid rgba(255,255,255,.08);border-radius:2px;color:#F2F0EA;box-shadow:0 12px 32px -16px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05)}
+.pf-hero .pf-badge{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.16);color:#C4C4C4;font-family:"JetBrains Mono",Consolas,monospace;font-weight:600;letter-spacing:.22em;border-radius:3px}
+.pf-hero h1{background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.01em}
+.pf-hero p{color:#A8A8A8;opacity:1}
+.pf-stat b{font-family:"JetBrains Mono",Consolas,monospace;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#FBFAF6 0%,#DEDBD2 55%,#C2BFB6 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pf-stat span{color:#8A8A8A;opacity:1;font-family:"JetBrains Mono",Consolas,monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+</style>
 </head>
 <body>
 <!-- LOGIN -->
