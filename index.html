@@ -10,7 +10,7 @@ if (location.hostname === 'riksonmiguellz.github.io') {
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LigaHub Finance · Gestão Interna</title>
+<title>Hub Finance · Gestão Interna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@ a{color:var(--brand)}
 .role-btn:hover{border-color:var(--brand);background:var(--brand-tint)}
 .role-btn .ic{font-size:20px}.role-btn .t{font-weight:650}.role-btn .d{font-size:12.5px;color:var(--ink-soft)}
 .pw-row{display:none;flex-direction:column;gap:8px;margin-top:14px}.pw-row.show{display:flex}
-input,select,textarea{font-family:inherit;font-size:14.5px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;width:100%}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;width:100%}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
 .btn{border:1px solid transparent;border-radius:10px;padding:11px 16px;font-weight:650;font-size:14px;background:var(--brand);color:#0A0A0A;transition:.15s;white-space:nowrap}
 .btn:hover{filter:brightness(1.06)}.btn:disabled{opacity:.5}
@@ -262,7 +262,7 @@ body{
 .toolbar{border-bottom:1px solid rgba(16,16,16,.12);padding-bottom:12px}
 .gate{background:radial-gradient(120% 90% at 50% -10%, #FFFFFF 0%, #F2F0EA 58%, #E9E6DE 100%) !important}
 .gate-card{background:rgba(251,250,246,.92);backdrop-filter:blur(14px);border:1px solid rgba(16,16,16,.15);border-radius:2px;box-shadow:0 26px 60px -26px rgba(20,18,12,.35),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden;position:relative}
-.gate-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 4%,rgba(16,16,16,.55) 35%,#8F7236 50%,rgba(16,16,16,.55) 65%,transparent 96%)}
+.gate-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 4%,rgba(16,16,16,.55) 35%,#C4C4C4 50%,rgba(16,16,16,.55) 65%,transparent 96%)}
 .brand-dot{color:#101010;filter:none}
 .gate-card h1{text-transform:uppercase;letter-spacing:.08em;font-size:21px;color:#101010}
 .eyebrow{font-family:"JetBrains Mono",Consolas,monospace;letter-spacing:.24em;font-weight:700;color:#5E5B54}
@@ -410,7 +410,7 @@ function toast(m,e){const t=$("#toast");t.textContent=m;t.className="toast show"
 
 const PRIOS=["Baixa","Média","Alta","Crítica"];
 const STATUS=["Em análise","Planejamento","Em execução","Revisão","Concluído","Cancelado"];
-const STATUS_COR={"Ideia":"#8b93a3","Em análise":"#C4C4C4","Planejamento":"#C4C4C4","Em execução":"#0E9F8E","Revisão":"#C67C00","Concluído":"#12A150","Cancelado":"#D62F2F"};
+const STATUS_COR={"Ideia":"#6E6B63","Em análise":"#5E5B54","Planejamento":"#3A3A3A","Em execução":"#101010","Revisão":"#C67C00","Concluído":"#12A150","Cancelado":"#D62F2F"};
 const TSTATUS=[{v:"pendente",t:"Pendente"},{v:"andamento",t:"Em andamento"},{v:"concluida",t:"Concluída"}];
 
 let sb=null,ROLE=null,SESSION=false,CONNECTED=false,lastWrite=0,CAN_PROVISION=false;
@@ -451,7 +451,7 @@ const Store={
     await ensureSB();
     sb.auth.onAuthStateChange((ev)=>{if(ev==="PASSWORD_RECOVERY")showRecoveryModal();});
     const {data:{session}}=await sb.auth.getSession();SESSION=!!session;
-    await this.reload();
+    if(SESSION)await this.reload();
     const other=()=>{if(Date.now()-lastWrite>1800)this.reload().then(render).catch(()=>{});};
     ["liga_pessoas","liga_projetos","liga_tarefas","liga_diretorias","liga_ideias","liga_reunioes","liga_candidatos","liga_aprovacoes","liga_mural","liga_eventos","liga_financeiro","liga_conquistas","liga_avaliacoes"].forEach(t=>sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},other).subscribe(t==="liga_projetos"?(st)=>{CONNECTED=(st==="SUBSCRIBED");}:undefined));
     sb.channel("rt-liga-notif").on("postgres_changes",{event:"*",schema:"public",table:"liga_notificacoes"},()=>{if(Date.now()-lastWrite>1500)this.reload().then(()=>renderBell()).catch(()=>{});}).subscribe();
@@ -502,7 +502,7 @@ const Store={
   async notificar(membro,titulo,texto,refId){if(!membro)return;const n={id:uid()+Math.random().toString(36).slice(2,6),membro,tipo:"atribuicao",ref_id:refId||null,titulo,texto,lida:false,criado_em:new Date().toISOString()};NOTIF.unshift(n);try{await sb.from("liga_notificacoes").insert(n);}catch(e){}this.emailNotify({tipo:"pessoa",alvoNome:membro,titulo,texto});},
   async emailNotify(payload){try{await fetch(CONFIG.SUPABASE_URL+"/functions/v1/notify-email",{method:"POST",headers:{"Content-Type":"application/json","apikey":CONFIG.SUPABASE_ANON_KEY,"Authorization":"Bearer "+CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify(payload)});}catch(e){}},
   async marcarLidas(membro){NOTIF.forEach(n=>{if(n.membro===membro)n.lida=true;});try{await sb.from("liga_notificacoes").update({lida:true}).eq("membro",membro).eq("lida",false);}catch(e){}},
-  async login(email,pass){await ensureSB();const {error}=await sb.auth.signInWithPassword({email:(email||"").trim().toLowerCase(),password:pass});if(error)throw new Error("E-mail ou senha inválidos");SESSION=true;let role="membro",nome="";CAN_PROVISION=false;try{const {data}=await sb.from("liga_membros_auth").select("nome,role,provisiona").limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";CAN_PROVISION=data[0].provisiona===true;}}catch(e){}await this.reload();return {role,nome};},
+  async login(email,pass){await ensureSB();const em=(email||"").trim().toLowerCase();const {error}=await sb.auth.signInWithPassword({email:em,password:pass});if(error)throw new Error("E-mail ou senha inválidos");SESSION=true;let role="membro",nome="";CAN_PROVISION=false;try{const {data}=await sb.from("liga_membros_auth").select("nome,role,provisiona").eq("email",em).limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";CAN_PROVISION=data[0].provisiona===true;}}catch(e){}await this.reload();return {role,nome};},
   async logout(){try{if(SESSION)await sb.auth.signOut();}catch(e){}SESSION=false;await this.reload().catch(()=>{});}
 };
 
@@ -524,7 +524,7 @@ $("#forgotBtn").onclick=async()=>{
 };
 /* Chegou pelo link de recuperação do e-mail → modal de nova senha */
 function showRecoveryModal(){
-  const m=document.createElement("div");m.className="modal-wrap";
+  const m=document.createElement("div");m.className="modal-bg";
   m.innerHTML=`<div class="modal" style="max-width:420px"><div class="modal-head"><h2>🔑 Criar nova senha</h2></div><div class="modal-body">
     <div class="field"><label>Nova senha (mín. 6 caracteres)</label><input id="rc-a" type="password" autocomplete="new-password" placeholder="Nova senha"></div>
     <div class="field"><label>Repita a nova senha</label><input id="rc-b" type="password" autocomplete="new-password" placeholder="Repita a senha"></div>
@@ -918,7 +918,7 @@ function renderCRM(){
 
 /* ---------- IDEIAS ---------- */
 const ISTATUS=["Nova","Em análise","Aprovada","Convertida","Descartada"];
-const ICOR={"Nova":"#C4C4C4","Em análise":"#C67C00","Aprovada":"#12A150","Convertida":"#0E9F8E","Descartada":"#8b93a3"};
+const ICOR={"Nova":"#5E5B54","Em análise":"#C67C00","Aprovada":"#12A150","Convertida":"#101010","Descartada":"#8F8C82"};
 function renderIdeias(){const el=$("#v-ideias");el.innerHTML=`<div class="toolbar"><div class="search"><span class="mag">🔍</span><input id="qI" placeholder="Buscar ideia..."></div><button class="btn sm" onclick="ideiaModal(null)">+ Nova ideia</button></div><div id="iBody"></div>`;const q=$("#qI");q.oninput=()=>drawIdeias(q.value);drawIdeias("");}
 function drawIdeias(term){const t=(term||"").toLowerCase();const rows=IDEIAS.filter(x=>!t||(x.titulo+" "+(x.descricao||"")+" "+(x.autor||"")+" "+(x.categoria||"")).toLowerCase().includes(t));$("#iBody").innerHTML=`<div class="grid-cards">${rows.map(ideiaCard).join("")||`<div class="empty" style="grid-column:1/-1">Nenhuma ideia ainda. Registre a primeira!</div>`}</div>`;wireIdeias();}
 function ideiaCard(x){const dir=ROLE==="direcao";return `<div class="pcard2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h4 style="font-size:15px">${esc(x.titulo)}</h4><span class="chip" style="background:${ICOR[x.status]}22;color:${ICOR[x.status]}">${x.status}</span></div><div>${x.categoria?`<span class="tag">${esc(x.categoria)}</span> `:""}<span class="prio prio-${x.prioridade}">${x.prioridade}</span></div>${x.descricao?`<div style="font-size:13px;color:var(--ink-soft)">${esc(x.descricao).slice(0,140)}</div>`:""}${x.autor?`<div style="font-size:12px;color:var(--ink-soft)">por ${esc(x.autor)}</div>`:""}<div class="p2-actions"><button class="btn ghost sm" data-ied="${x.id}">Ver / editar</button>${dir&&x.status!=="Convertida"?`<button class="btn sm" data-iconv="${x.id}">Vira projeto</button>`:""}${dir?`<button class="link" style="color:var(--crit)" data-idel="${x.id}">remover</button>`:""}</div></div>`;}
@@ -1006,7 +1006,7 @@ function pontosAuto(nome){
   TAREFAS.forEach(t=>{if(t.responsavel===nome&&t.status==="concluida"){p+=PTS.tarefa;det.tarefas++;}});
   PROJETOS.forEach(pr=>{if(pr.status==="Concluído"&&(pr.lider===nome||(pr.equipe||[]).includes(nome))){p+=PTS.projeto;det.projetos++;}});
   EVENTOS.forEach(e=>{if(e.status==="Realizado"&&(e.equipe||[]).includes(nome)){p+=PTS.evento;det.eventos++;}});
-  REUNIOES.forEach(r=>{if((r.presenca||[]).includes(nome)){p+=PTS.reuniao;det.reunioes++;}});
+  REUNIOES.forEach(r=>{if((r.presenca||[]).some(pp=>pp&&pp.nome===nome&&pp.presente)){p+=PTS.reuniao;det.reunioes++;}});
   IDEIAS.forEach(i=>{if(i.autor===nome&&(i.status==="Aprovada"||i.status==="Convertida")){p+=PTS.ideia;det.ideias++;}});
   return {p,det};
 }
@@ -1114,7 +1114,7 @@ function portfolioHTML(){
   const stat=(v,l)=>`<div class="pf-stat"><b>${v}</b><span>${l}</span></div>`;
   return `
     <div class="pf-hero">
-      <div class="pf-badge">LigaHub Finance</div>
+      <div class="pf-badge">Hub Finance</div>
       <h1>O que a Liga já construiu</h1>
       <p>Projetos entregues, eventos realizados e um time que faz acontecer.</p>
       <div class="pf-stats">${stat(concl.length,"projetos entregues")}${stat(evs.length,"eventos realizados")}${stat(PESSOAS.length,"membros")}${stat(DIRETORIAS.length,"diretorias")}</div>
@@ -1127,7 +1127,7 @@ function portfolioHTML(){
 function renderPortfolio(){$("#v-portfolio").innerHTML=`<div class="toolbar"><h2 style="font-size:19px;margin:0">🌐 Portfólio</h2><div style="flex:1"></div><span style="font-size:12px;color:var(--ink-soft)">Esta é a visão pública compartilhável</span></div>`+portfolioHTML();}
 function openPortfolioPublic(){
   const m=document.createElement("div");m.className="pf-overlay";
-  m.innerHTML=`<div class="pf-topbar"><b>🌐 Portfólio · LigaHub Finance</b><button class="btn ghost sm" id="pf-close">✕ Fechar</button></div><div class="pf-body">${portfolioHTML()}</div>`;
+  m.innerHTML=`<div class="pf-topbar"><b>🌐 Portfólio · Hub Finance</b><button class="btn ghost sm" id="pf-close">✕ Fechar</button></div><div class="pf-body">${portfolioHTML()}</div>`;
   document.body.appendChild(m);
   m.querySelector("#pf-close").onclick=()=>m.remove();
 }
@@ -1240,13 +1240,13 @@ async function gerarRelatorioPDF(filtro){
   const W=210;let y=0;
   const hoje=new Date().toLocaleDateString("pt-BR");
   // capa header
-  doc.setFillColor(15,42,74);doc.rect(0,0,W,46,"F");
-  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(22);doc.text("LigaHub Finance",16,24);
+  doc.setFillColor(8,8,8);doc.rect(0,0,W,46,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(22);doc.text("Hub Finance",16,24);
   doc.setFont("helvetica","normal");doc.setFontSize(12);doc.text("Relatório executivo de gestão",16,33);
   doc.setFontSize(9);doc.text("Gerado em "+hoje+(filtro?"  ·  Diretoria: "+filtro:"  ·  Todas as diretorias"),16,40);
   y=58;
-  const sec=(txt)=>{doc.setTextColor(37,99,235);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(txt,16,y);doc.setDrawColor(37,99,235);doc.setLineWidth(.4);doc.line(16,y+2,W-16,y+2);y+=9;doc.setTextColor(40,48,60);doc.setFont("helvetica","normal");doc.setFontSize(11);};
-  const line=(l,v)=>{doc.setFont("helvetica","normal");doc.setTextColor(90,102,117);doc.text(l,16,y);doc.setFont("helvetica","bold");doc.setTextColor(20,26,36);doc.text(String(v),W-16,y,{align:"right"});y+=7;};
+  const sec=(txt)=>{doc.setTextColor(58,58,58);doc.setFont("helvetica","bold");doc.setFontSize(13);doc.text(txt,16,y);doc.setDrawColor(58,58,58);doc.setLineWidth(.4);doc.line(16,y+2,W-16,y+2);y+=9;doc.setTextColor(42,42,38);doc.setFont("helvetica","normal");doc.setFontSize(11);};
+  const line=(l,v)=>{doc.setFont("helvetica","normal");doc.setTextColor(94,91,84);doc.text(l,16,y);doc.setFont("helvetica","bold");doc.setTextColor(16,16,16);doc.text(String(v),W-16,y,{align:"right"});y+=7;};
   // indicadores gerais
   const totalProj=PROJETOS.length,ativos=PROJETOS.filter(projAtivo).length,concl=PROJETOS.filter(p=>p.status==="Concluído").length;
   const taxaGeral=totalProj?Math.round(concl/totalProj*100):0;const tPend=TAREFAS.filter(t=>t.status!=="concluida").length,tAtr=TAREFAS.filter(tarefaAtrasada).length;
@@ -1269,13 +1269,13 @@ async function gerarRelatorioPDF(filtro){
   // por diretoria
   sec("3. Desempenho por diretoria");
   const stats=dirStats().filter(s=>!filtro||s.nome===filtro).sort((a,b)=>b.ativos-a.ativos);
-  doc.setFontSize(9);doc.setTextColor(120,130,145);
+  doc.setFontSize(9);doc.setTextColor(110,107,99);
   doc.text("Diretoria",16,y);doc.text("Proj.",96,y);doc.text("Ativos",116,y);doc.text("Concl.",138,y);doc.text("Conc.%",160,y);doc.text("Saldo",W-16,y,{align:"right"});y+=5;
-  doc.setDrawColor(220,226,235);doc.line(16,y-2,W-16,y-2);
+  doc.setDrawColor(222,219,210);doc.line(16,y-2,W-16,y-2);
   doc.setFontSize(10);
-  stats.forEach(s=>{if(y>275){doc.addPage();y=20;}doc.setTextColor(20,26,36);doc.setFont("helvetica","bold");doc.text(String(s.nome).slice(0,34),16,y);doc.setFont("helvetica","normal");doc.setTextColor(60,70,85);doc.text(String(s.total),96,y);doc.text(String(s.ativos),116,y);doc.text(String(s.concl),138,y);doc.text(s.taxa+"%",160,y);doc.setTextColor((s.rec-s.des)<0?214:18,(s.rec-s.des)<0?47:161,(s.rec-s.des)<0?47:80);doc.text(brMoney(s.rec-s.des),W-16,y,{align:"right"});y+=6.5;});
+  stats.forEach(s=>{if(y>275){doc.addPage();y=20;}doc.setTextColor(16,16,16);doc.setFont("helvetica","bold");doc.text(String(s.nome).slice(0,34),16,y);doc.setFont("helvetica","normal");doc.setTextColor(62,60,54);doc.text(String(s.total),96,y);doc.text(String(s.ativos),116,y);doc.text(String(s.concl),138,y);doc.text(s.taxa+"%",160,y);doc.setTextColor((s.rec-s.des)<0?214:18,(s.rec-s.des)<0?47:161,(s.rec-s.des)<0?47:80);doc.text(brMoney(s.rec-s.des),W-16,y,{align:"right"});y+=6.5;});
   // rodapé
-  const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(150,158,170);doc.text("LigaHub Finance · Relatório interno · "+hoje,16,290);doc.text(i+"/"+pages,W-16,290,{align:"right"});}
+  const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(143,140,130);doc.text("Hub Finance · Relatório interno · "+hoje,16,290);doc.text(i+"/"+pages,W-16,290,{align:"right"});}
   doc.save("ligahub-relatorio-"+todayISO()+".pdf");
   toast("Relatório gerado");
 }
@@ -1316,17 +1316,17 @@ async function gerarCertificado(ev,inscrito){
   if(!window.jspdf){await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";s.onload=res;s.onerror=()=>rej(new Error("no lib"));document.head.appendChild(s);});}
   const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
   const W=297,H=210;
-  doc.setFillColor(245,247,251);doc.rect(0,0,W,H,"F");
-  doc.setDrawColor(37,99,235);doc.setLineWidth(1.5);doc.rect(12,12,W-24,H-24);
-  doc.setDrawColor(14,159,142);doc.setLineWidth(0.5);doc.rect(16,16,W-32,H-32);
-  doc.setTextColor(15,42,74);doc.setFont("helvetica","bold");doc.setFontSize(30);doc.text("CERTIFICADO",W/2,50,{align:"center"});
-  doc.setTextColor(90,102,117);doc.setFont("helvetica","normal");doc.setFontSize(13);doc.text("A LigaHub Finance certifica que",W/2,72,{align:"center"});
-  doc.setTextColor(37,99,235);doc.setFont("helvetica","bold");doc.setFontSize(26);doc.text(inscrito.nome||"—",W/2,90,{align:"center"});
-  doc.setTextColor(60,70,85);doc.setFont("helvetica","normal");doc.setFontSize(13);
+  doc.setFillColor(242,240,234);doc.rect(0,0,W,H,"F");
+  doc.setDrawColor(58,58,58);doc.setLineWidth(1.5);doc.rect(12,12,W-24,H-24);
+  doc.setDrawColor(122,122,122);doc.setLineWidth(0.5);doc.rect(16,16,W-32,H-32);
+  doc.setTextColor(16,16,16);doc.setFont("helvetica","bold");doc.setFontSize(30);doc.text("CERTIFICADO",W/2,50,{align:"center"});
+  doc.setTextColor(94,91,84);doc.setFont("helvetica","normal");doc.setFontSize(13);doc.text("A Hub Finance certifica que",W/2,72,{align:"center"});
+  doc.setTextColor(58,58,58);doc.setFont("helvetica","bold");doc.setFontSize(26);doc.text(inscrito.nome||"—",W/2,90,{align:"center"});
+  doc.setTextColor(62,60,54);doc.setFont("helvetica","normal");doc.setFontSize(13);
   const linha=`participou do evento "${ev.nome}" (${ev.tipo})${ev.data?", em "+brDate(ev.data):""}.`;
   doc.text(doc.splitTextToSize(linha,W-90),W/2,106,{align:"center"});
-  doc.setDrawColor(15,42,74);doc.setLineWidth(0.4);doc.line(W/2-45,168,W/2+45,168);
-  doc.setFontSize(11);doc.setTextColor(90,102,117);doc.text("LigaHub Finance · Direção",W/2,175,{align:"center"});
+  doc.setDrawColor(16,16,16);doc.setLineWidth(0.4);doc.line(W/2-45,168,W/2+45,168);
+  doc.setFontSize(11);doc.setTextColor(94,91,84);doc.text("Hub Finance · Direção",W/2,175,{align:"center"});
   doc.save("certificado-"+(inscrito.nome||"membro").replace(/\s+/g,"-").toLowerCase()+".pdf");
   toast("Certificado gerado");
 }
@@ -1335,7 +1335,7 @@ async function gerarCertificado(ev,inscrito){
 let CAL_REF=null;
 function calItens(){
   const it=[];
-  REUNIOES.forEach(r=>{if(r.data)it.push({data:r.data,tipo:"Reunião",cor:"#C4C4C4",nome:r.titulo});});
+  REUNIOES.forEach(r=>{if(r.data)it.push({data:r.data,tipo:"Reunião",cor:"#5E5B54",nome:r.titulo});});
   EVENTOS.forEach(e=>{if(e.data)it.push({data:e.data,tipo:"Evento",cor:"#0E9F8E",nome:e.nome});});
   PROJETOS.forEach(p=>{if(p.prazo&&projAtivo(p))it.push({data:p.prazo,tipo:"Prazo projeto",cor:"#C67C00",nome:p.nome});});
   TAREFAS.forEach(t=>{if(t.prazo&&t.status!=="concluida")it.push({data:t.prazo,tipo:"Prazo tarefa",cor:"#D62F2F",nome:t.titulo});});
@@ -1365,7 +1365,7 @@ function notifModal(){
     <div class="modal-foot"><button class="btn ghost" id="notifClr">Marcar todas como lidas</button><button class="btn" data-x>Fechar</button></div></div>`;
   $("#modalMount").appendChild(bg);
   bg.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>bg.remove());bg.onclick=e=>{if(e.target===bg)bg.remove();};
-  const draw=()=>{const box=$("#notifList");if(!EU){box.innerHTML=`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Escolha seu nome para ver o que foi atribuído a você.</div>`;return;}const mine=NOTIF.filter(n=>n.membro===EU).slice(0,60);box.innerHTML=mine.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">`+mine.map(n=>{const alvo=n.ref_id&&(TAREFAS.some(x=>x.id===n.ref_id)?"tarefa":(PROJETOS.some(x=>x.id===n.ref_id)?"projeto":""));return `<div class="notif-item" ${alvo?`data-ref="${esc(n.ref_id)}" data-alvo="${alvo}" style="cursor:pointer;"`:""} style="border:1px solid var(--line);border-left:4px solid ${n.lida?"var(--line)":"var(--brand)"};border-radius:10px;padding:10px 12px;background:${n.lida?"var(--panel-2)":"var(--brand-tint)"}${alvo?";cursor:pointer":""}"><div style="font-weight:700;font-size:13.5px">${esc(n.titulo||"Notificação")}</div><div style="font-size:13px;margin-top:2px">${esc(n.texto||"")}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${n.criado_em?new Date(n.criado_em).toLocaleString("pt-BR"):""}${alvo?` · <span style="color:var(--brand);font-weight:600">abrir ${alvo} ›</span>`:""}</div></div>`;}).join("")+`</div>`:`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Nenhuma notificação por enquanto.</div>`;box.querySelectorAll(".notif-item[data-ref]").forEach(el=>el.onclick=()=>{const ref=el.dataset.ref,alvo=el.dataset.alvo;bg.remove();if(alvo==="tarefa"){switchView("tarefas");tarefaModal(ref);}else if(alvo==="projeto"){switchView("projetos");projModal(ref,true);}});};
+  const draw=()=>{const box=$("#notifList");if(!EU){box.innerHTML=`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Escolha seu nome para ver o que foi atribuído a você.</div>`;return;}const mine=NOTIF.filter(n=>n.membro===EU).slice(0,60);box.innerHTML=mine.length?`<div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">`+mine.map(n=>{const alvo=n.ref_id&&(TAREFAS.some(x=>x.id===n.ref_id)?"tarefa":(PROJETOS.some(x=>x.id===n.ref_id)?"projeto":""));return `<div class="notif-item" ${alvo?`data-ref="${esc(n.ref_id)}" data-alvo="${alvo}"`:""} style="border:1px solid var(--line);border-left:4px solid ${n.lida?"var(--line)":"var(--brand)"};border-radius:10px;padding:10px 12px;background:${n.lida?"var(--panel-2)":"var(--brand-tint)"}${alvo?";cursor:pointer":""}"><div style="font-weight:700;font-size:13.5px">${esc(n.titulo||"Notificação")}</div><div style="font-size:13px;margin-top:2px">${esc(n.texto||"")}</div><div style="font-size:11px;color:var(--ink-soft);margin-top:4px">${n.criado_em?new Date(n.criado_em).toLocaleString("pt-BR"):""}${alvo?` · <span style="color:var(--brand);font-weight:600">abrir ${alvo} ›</span>`:""}</div></div>`;}).join("")+`</div>`:`<div style="color:var(--ink-soft);text-align:center;padding:18px;font-size:13.5px">Nenhuma notificação por enquanto.</div>`;box.querySelectorAll(".notif-item[data-ref]").forEach(el=>el.onclick=()=>{const ref=el.dataset.ref,alvo=el.dataset.alvo;bg.remove();if(alvo==="tarefa"){switchView("tarefas");tarefaModal(ref);}else if(alvo==="projeto"){switchView("projetos");projModal(ref,true);}});};
   draw();
   $("#notifClr").onclick=async()=>{if(!EU)return;lastWrite=Date.now();await Store.marcarLidas(EU);draw();renderBell();};
 }
@@ -1397,8 +1397,8 @@ window.gerarAcessoModal=()=>{
       res.innerHTML=`<div style="font-weight:700;margin-bottom:6px">✅ Acesso ${data.criado?"criado":"atualizado"} para ${esc(data.nome)}</div>
         <div style="font-size:13.5px;line-height:1.7">E-mail: <b>${esc(data.email)}</b><br>Senha: <b style="font-size:16px;color:var(--brand)">${esc(data.senha)}</b><br>Papel: <b>${data.role==="direcao"?"Direção":"Membro"}</b></div>
         <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" id="ga-copy" type="button">📋 Copiar</button><button class="btn ghost sm" id="ga-mail" type="button">📧 Enviar por e-mail</button></div>`;
-      $("#ga-copy").onclick=()=>{const txt=`LigaHub — seu acesso\nLink: https://riksonmiguellz.github.io/ligahubfinance/\nE-mail: ${data.email}\nSenha: ${data.senha}`;navigator.clipboard.writeText(txt).then(()=>toast("Copiado")).catch(()=>toast("Copie manualmente",true));};
-      $("#ga-mail").onclick=async()=>{const mb=$("#ga-mail");mb.disabled=true;mb.textContent="Enviando...";try{const r=await sb.functions.invoke("notify-email",{body:{toOverride:data.email,titulo:"Seu acesso ao LigaHub",texto:`Olá ${data.nome}! Seu acesso: e-mail ${data.email} e senha ${data.senha}. Recomendamos trocar a senha no primeiro acesso.`,link:"https://riksonmiguellz.github.io/ligahubfinance/"}});if(r.data&&r.data.ok)toast("E-mail enviado");else toast("E-mail não pôde ser enviado (verifique domínio)",true);}catch(e){toast("Falha no e-mail",true);}mb.disabled=false;mb.textContent="📧 Enviar por e-mail";};
+      $("#ga-copy").onclick=()=>{const txt=`Hub Finance — seu acesso\nLink: https://ligahubfinance.com.br/pipeline/\nE-mail: ${data.email}\nSenha: ${data.senha}`;navigator.clipboard.writeText(txt).then(()=>toast("Copiado")).catch(()=>toast("Copie manualmente",true));};
+      $("#ga-mail").onclick=async()=>{const mb=$("#ga-mail");mb.disabled=true;mb.textContent="Enviando...";try{const r=await sb.functions.invoke("notify-email",{body:{toOverride:data.email,titulo:"Seu acesso ao Hub Finance",texto:`Olá ${data.nome}! Seu acesso: e-mail ${data.email} e senha ${data.senha}. Recomendamos trocar a senha no primeiro acesso.`,link:"https://ligahubfinance.com.br/pipeline/"}});if(r.data&&r.data.ok)toast("E-mail enviado");else toast("E-mail não pôde ser enviado (verifique domínio)",true);}catch(e){toast("Falha no e-mail",true);}mb.disabled=false;mb.textContent="📧 Enviar por e-mail";};
       Store.reload().catch(()=>{});toast("Acesso gerado");
     }catch(e){$("#ga-err").textContent="Erro: "+(e.message||"não foi possível gerar");}
     b.disabled=false;b.textContent="Gerar acesso";
@@ -1414,7 +1414,7 @@ window.BGFX=(function(){const canvas=$("#bgfx");if(!canvas)return {start(){},sto
   function build(){rz();const c=Math.max(20,Math.min(50,Math.floor((W*H)/(38000*DPR))));nodes=Array.from({length:c},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.16*DPR,vy:(Math.random()-.5)*.16*DPR,r:(Math.random()*1.5+.7)*DPR}));pulses=[];}
   const MD=()=>150*DPR;
   function spawn(){if(pulses.length>9||!nodes.length)return;const i=Math.random()*nodes.length|0,a=nodes[i];let bj=-1,bd=MD();for(let j=0;j<nodes.length;j++){if(j===i)continue;const b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<bd){bd=d;bj=j;}}if(bj>=0)pulses.push({a:i,b:bj,t:0,sp:.008+Math.random()*.012});}
-  function frame(){ctx.clearRect(0,0,W,H);for(const n of nodes){n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;}const md=MD();for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const a=nodes[i],b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<md){const o=1-d/md;ctx.strokeStyle="rgba(196,196,196,"+(o*.26)+")";ctx.lineWidth=DPR*.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}for(const n of nodes){const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*6);g.addColorStop(0,"rgba(196,196,196,.32)");g.addColorStop(1,"rgba(196,196,196,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r*6,0,TAU);ctx.fill();ctx.fillStyle="rgba(196,196,196,.85)";ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,TAU);ctx.fill();}for(let k=pulses.length-1;k>=0;k--){const p=pulses[k];p.t+=p.sp;const a=nodes[p.a],b=nodes[p.b];if(!a||!b||p.t>=1){pulses.splice(k,1);continue;}const x=a.x+(b.x-a.x)*p.t,y=a.y+(b.y-a.y)*p.t,g=ctx.createRadialGradient(x,y,0,x,y,5.5*DPR);g.addColorStop(0,"rgba(14,159,142,.95)");g.addColorStop(1,"rgba(14,159,142,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,5.5*DPR,0,TAU);ctx.fill();}if(Math.random()<.06)spawn();raf=requestAnimationFrame(frame);}
+  function frame(){ctx.clearRect(0,0,W,H);for(const n of nodes){n.x+=n.vx;n.y+=n.vy;if(n.x<0||n.x>W)n.vx*=-1;if(n.y<0||n.y>H)n.vy*=-1;}const md=MD();for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const a=nodes[i],b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<md){const o=1-d/md;ctx.strokeStyle="rgba(16,16,16,"+(o*.26)+")";ctx.lineWidth=DPR*.8;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}for(const n of nodes){const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*6);g.addColorStop(0,"rgba(196,196,196,.32)");g.addColorStop(1,"rgba(196,196,196,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r*6,0,TAU);ctx.fill();ctx.fillStyle="rgba(16,16,16,.5)";ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,TAU);ctx.fill();}for(let k=pulses.length-1;k>=0;k--){const p=pulses[k];p.t+=p.sp;const a=nodes[p.a],b=nodes[p.b];if(!a||!b||p.t>=1){pulses.splice(k,1);continue;}const x=a.x+(b.x-a.x)*p.t,y=a.y+(b.y-a.y)*p.t,g=ctx.createRadialGradient(x,y,0,x,y,5.5*DPR);g.addColorStop(0,"rgba(14,159,142,.95)");g.addColorStop(1,"rgba(14,159,142,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,5.5*DPR,0,TAU);ctx.fill();}if(Math.random()<.06)spawn();raf=requestAnimationFrame(frame);}
   function start(){if(run)return;run=true;build();frame();if(reduce){run=false;if(raf){cancelAnimationFrame(raf);raf=null;}}}
   function stop(){run=false;if(raf){cancelAnimationFrame(raf);raf=null;}}
   let rt;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(run)build();},200);});
@@ -1471,6 +1471,7 @@ function pubCard(p){
     <h3 style="font-size:16px;margin:2px 0">${esc(p.titulo)}</h3>
     <div style="font-size:12px;color:var(--ink-soft)">por ${esc(p.autor_nome||p.autor_email||"—")}${p.aprovador_email?` · aprovado por ${esc(p.aprovador_nome||p.aprovador_email)}`:""} · ${p.criado_em?new Date(p.criado_em).toLocaleDateString("pt-BR"):""}${anexos?` · 📎 ${anexos} anexo${anexos>1?"s":""}`:""}</div>
     ${p.resumo?`<div style="font-size:13.5px;color:var(--ink-soft);margin-top:6px">${esc(p.resumo)}</div>`:""}
+    ${p.status==="rejeitado"&&p.meta&&p.meta.motivo_rejeicao?`<div style="font-size:13px;color:var(--crit);margin-top:6px;border-left:3px solid var(--crit);padding-left:8px">Motivo da rejeição: ${esc(p.meta.motivo_rejeicao)}</div>`:""}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px">${acts.join("")}</div>
   </div></div></div>`;
 }
@@ -1548,7 +1549,7 @@ window.pubModal=function(id){
       for(const f of Array.from($("#pb-anx").files)){const url=await pubUpload(f,"anexos");anexos.push({nome:f.name,url,tipo:f.type||""});}
       const row={tipo,titulo:tit,resumo:$("#pb-res").value.trim(),conteudo:$("#pb-cont").value,capa_url:capa,anexos,meta,status,autor_email:EU_EMAIL,autor_nome:EU||""};
       let error;
-      if(editing)({error}=await sb.from("liga_publicacoes").update(row).eq("id",p.id));
+      if(editing){delete row.autor_email;delete row.autor_nome;({error}=await sb.from("liga_publicacoes").update(row).eq("id",p.id));}
       else ({error}=await sb.from("liga_publicacoes").insert(row));
       if(error)throw error;
       m.remove();toast(status==="pendente"?"Enviado! Outra pessoa da direção precisa aprovar.":"Rascunho salvo");
@@ -1559,7 +1560,9 @@ window.pubModal=function(id){
   $("#pb-env").onclick=()=>salvar("pendente",$("#pb-env"));
 };
 
-(async function(){try{window.BGFX.start();}catch(e){}try{await Store.init();}catch(e){$("#gateErr").textContent="Aviso: "+(e.message||"falha ao conectar");}renderGateTeam();})();
+(async function(){try{window.BGFX.start();}catch(e){}try{await Store.init();}catch(e){$("#gateErr").textContent="Aviso: "+(e.message||"falha ao conectar");}
+  if(SESSION){try{const {data:{user}}=await sb.auth.getUser();const em=((user&&user.email)||"").toLowerCase();let role="membro",nome="";const {data}=await sb.from("liga_membros_auth").select("nome,role,provisiona").eq("email",em).limit(1);if(data&&data[0]){role=data[0].role||"membro";nome=data[0].nome||"";CAN_PROVISION=data[0].provisiona===true;}enter(role,nome);return;}catch(e){}}
+  renderGateTeam();})();
 </script>
 </body>
 </html>
